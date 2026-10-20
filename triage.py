@@ -26,6 +26,8 @@ ACTION_SCHEMA: Dict[str, Dict[str, Any]] = {
     "ask_safety_question": {"mode": "guided", "priority": 60, "directive_key": "ask_safety_question"},
     "medical_differential": {"mode": "guided", "priority": 50, "directive_key": "medical_differential"},
     "urgent_human_support": {"mode": "guided", "priority": 40, "directive_key": "urgent_human_support"},
+    # Hibrit trijaj: belirsiz / geçmişe ait / ima edilen risk -> acil mesaj değil, nazik kontrol sorusu
+    "uncertain_check_in": {"mode": "guided", "priority": 45, "directive_key": "uncertain_check_in"},
 }
 
 # Belirli bayraklar için eylem şemasının üzerine yazılan özel durumlar.
@@ -103,6 +105,21 @@ def run_triage(message: str, detector: Optional[Callable[[str], List[Dict[str, s
         "directives": directives,
         "risk_level": risk,
     }
+
+
+def run_hybrid_triage(message: str, semantic_fn: Optional[Callable[[str], Dict[str, Any]]] = None) -> Dict[str, Any]:
+    """Kural + semantik (LLM) trijaj. Sonuç `run_triage` ile aynı yapıdadır, ek olarak:
+      semantic : semantik katmanın meta bilgisi (zamansal bağlam, güven, düşürülen bayraklar, hata)
+      flags[i]['source'] : 'rule' | 'semantic' | 'both'
+    Kurallar belirleyici (deterministik) kalır; semantik katman yalnızca ekler. Emin olunamayan durumlarda
+    'uncertain_risk' bayrağı ile güvenli yöne (nazik kontrol sorusu) gidilir.
+    """
+    from semantic_triage import hybrid_flags  # geç import: döngüsel bağımlılığı önler
+
+    flags, meta = hybrid_flags(message, semantic_fn)
+    result = run_triage(message, detector=lambda _m: flags)
+    result["semantic"] = meta
+    return result
 
 
 def build_canned_message(canned_keys: List[str], lang: str, max_parts: int = 2) -> str:

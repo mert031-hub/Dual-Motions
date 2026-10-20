@@ -161,6 +161,12 @@ DIRECTIVES: Dict[str, str] = {
         "long advice lists, gently encourage reaching a trusted person or health professional soon, and ask "
         "whether someone nearby could help them today."
     ),
+    "uncertain_check_in": (
+        "The message may contain a risk signal that is ambiguous, refers to the past, is hypothetical, concerns "
+        "another person, or could not be assessed reliably. Respond warmly to what the patient said, do not assume "
+        "the worst and do not dismiss it, and ask exactly ONE open, non-leading question about how they are doing "
+        "right now (for example whether they are having thoughts of harming themselves). Do not diagnose."
+    ),
 }
 
 

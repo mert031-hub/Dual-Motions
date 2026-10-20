@@ -9,7 +9,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import llm_factory  # noqa: E402
 from judge import AbsoluteJudgment, PairwiseJudgment  # noqa: E402
+from memory import MemoryUpdate  # noqa: E402
+from semantic_triage import SemanticTriageResult  # noqa: E402
 from workflow import CriticEvaluation  # noqa: E402
+
+
+def sem(categories=(), temporal="current", confidence="high", abstain=False, implicit=False, evidence=("kanıt",)):
+    return SemanticTriageResult(risk_categories=list(categories), evidence=list(evidence), temporal_context=temporal,
+                                implicit=implicit, confidence=confidence, abstain=abstain,
+                                detected_language="Turkish", rationale="gerekçe")
 
 
 def approve(**kw):
@@ -49,6 +57,9 @@ class Backend:
         self.vanilla = ["Yalın yanıt."]
         self.abs_judgments = [good_abs()]
         self.pair_judgments = [pair()]
+        self.critic_fn = None              # varsa: prompt -> CriticEvaluation (kuyruğun yerine dinamik davranış)
+        self.semantic = [sem()]            # varsayılan: risk yok, şimdiki zaman, yüksek güven
+        self.memory_updates = [MemoryUpdate()]
         self.calls = []  # (tür, prompt metni)
 
     def _next(self, queue):
@@ -83,11 +94,17 @@ class FakeModel:
                 name = schema.__name__
                 backend.calls.append((name, messages[0].content))
                 if name == "CriticEvaluation":
+                    if backend.critic_fn is not None:
+                        return backend.critic_fn(messages[0].content)
                     return backend._next(backend.critic)
                 if name == "AbsoluteJudgment":
                     return backend._next(backend.abs_judgments)
                 if name == "PairwiseJudgment":
                     return backend._next(backend.pair_judgments)
+                if name == "SemanticTriageResult":
+                    return backend._next(backend.semantic)
+                if name == "MemoryUpdate":
+                    return backend._next(backend.memory_updates)
                 raise AssertionError(f"beklenmeyen şema {name}")
 
         return Structured()

@@ -52,6 +52,36 @@ def bootstrap_ci(values: Sequence[float], n_boot: int = 2000, seed: int = 0, alp
     return float(arr.mean()), float(np.quantile(means, alpha / 2)), float(np.quantile(means, 1 - alpha / 2))
 
 
+def cohens_kappa(a: Sequence[Any], b: Sequence[Any]) -> float:
+    """Cohen's kappa (nominal). Perfect uyum ve beklenen uyum=1 durumunda 1.0; veri yoksa NaN."""
+    a, b = list(a), list(b)
+    n = len(a)
+    if n == 0 or n != len(b):
+        return NAN
+    labels = set(a) | set(b)
+    po = sum(x == y for x, y in zip(a, b)) / n
+    pe = sum((a.count(l) / n) * (b.count(l) / n) for l in labels)
+    if pe == 1:
+        return 1.0 if po == 1 else 0.0
+    return (po - pe) / (1 - pe)
+
+
+def weighted_kappa(a: Sequence[int], b: Sequence[int], labels: Sequence[int] = (1, 2, 3, 4, 5)) -> float:
+    """Kuadratik ağırlıklı kappa (sıralı puanlar için; klinisyen–yargıç uyumu)."""
+    a, b = list(a), list(b)
+    n, k = len(a), len(labels)
+    if n == 0 or n != len(b) or k < 2:
+        return NAN
+    idx = {l: i for i, l in enumerate(labels)}
+    obs = np.zeros((k, k))
+    for x, y in zip(a, b):
+        obs[idx[int(round(x))], idx[int(round(y))]] += 1
+    exp = np.outer(obs.sum(axis=1), obs.sum(axis=0)) / n
+    w = np.array([[((i - j) ** 2) / ((k - 1) ** 2) for j in range(k)] for i in range(k)])
+    denom = (w * exp).sum()
+    return 1.0 if denom == 0 else float(1 - (w * obs).sum() / denom)
+
+
 def binary_metrics(tp: int, fp: int, tn: int, fn: int) -> Dict[str, Any]:
     pos, neg = tp + fn, fp + tn
     recall, r_lo, r_hi = wilson_interval(tp, pos)

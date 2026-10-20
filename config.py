@@ -30,6 +30,11 @@ def _int(name: str, default: int) -> int:
 # ------------------------------------------------------------------
 MODEL_NAME: str = os.getenv("MODEL_NAME", "openai/gpt-oss-120b")
 
+# Critic ve semantik trijaj için ayrı model seçilebilir (Critic maliyet/gecikme deneyi: critic_experiment.py).
+# Varsayılan: üretim modeliyle aynı.
+CRITIC_MODEL: str = os.getenv("CRITIC_MODEL", MODEL_NAME)
+SEMANTIC_MODEL: str = os.getenv("SEMANTIC_MODEL", MODEL_NAME)
+
 POLICY_TEMPERATURE: float = _float("POLICY_TEMPERATURE", 0.6)
 VANILLA_TEMPERATURE: float = _float("VANILLA_TEMPERATURE", 0.7)
 CRITIC_TEMPERATURE: float = _float("CRITIC_TEMPERATURE", 0.1)
@@ -55,8 +60,8 @@ HISTORY_WINDOW: int = _int("HISTORY_WINDOW", 10)     # Policy/Critic'e verilen s
 # ------------------------------------------------------------------
 # Sürümleme (deney kayıtları için)
 # ------------------------------------------------------------------
-PROMPT_VERSION: str = "2026.10.v2"
-CODE_VERSION: str = "v2-faz1-faz2"
+PROMPT_VERSION: str = "2026.10.v3"
+CODE_VERSION: str = "v2.1-faz3-faz4"
 
 # ------------------------------------------------------------------
 # Sistem kolları (ablation).  Word taslağındaki A/B/C/D + ek kontrol kolu.
@@ -64,28 +69,38 @@ CODE_VERSION: str = "v2-faz1-faz2"
 #   use_critic : Critic denetimi + revizyon döngüsü açık mı
 #   use_policy : Policy (klinik sistem prompt'u) kullanılıyor mu (False => ham LLM)
 # ------------------------------------------------------------------
+#   use_semantic: kural trijajına ek LLM tabanlı semantik trijaj (hibrit trijaj, Faz 3)
 SYSTEMS: Dict[str, Dict[str, object]] = {
     "vanilla": {
         "label": "A: Vanilla",
-        "use_triage": False, "use_critic": False, "use_policy": False,
+        "use_triage": False, "use_semantic": False, "use_critic": False, "use_policy": False,
     },
     "triage_only": {
         "label": "B: Triage Only",
-        "use_triage": True, "use_critic": False, "use_policy": True,
+        "use_triage": True, "use_semantic": False, "use_critic": False, "use_policy": True,
     },
     "critic_only": {
         "label": "C: Critic Only",
-        "use_triage": False, "use_critic": True, "use_policy": True,
+        "use_triage": False, "use_semantic": False, "use_critic": True, "use_policy": True,
     },
     "full": {
         "label": "D: Full Architecture",
-        "use_triage": True, "use_critic": True, "use_policy": True,
+        "use_triage": True, "use_semantic": False, "use_critic": True, "use_policy": True,
     },
     # Ek kontrol kolu: Policy prompt'unun tek başına etkisini ayırır
     # (A'ya göre kazanç prompt'tan mı, mimariden mi?).
     "policy_only": {
         "label": "Kontrol: Policy Only",
-        "use_triage": False, "use_critic": False, "use_policy": True,
+        "use_triage": False, "use_semantic": False, "use_critic": False, "use_policy": True,
+    },
+    # Faz 3: hibrit trijaj (kural + semantik). H2: hibrit, yalnız kuraldan daha yüksek kriz yakalama sağlar mı?
+    "hybrid_triage_only": {
+        "label": "E1: Hibrit Triage Only",
+        "use_triage": True, "use_semantic": True, "use_critic": False, "use_policy": True,
+    },
+    "full_hybrid": {
+        "label": "E2: Full + Hibrit Trijaj",
+        "use_triage": True, "use_semantic": True, "use_critic": True, "use_policy": True,
     },
 }
 
