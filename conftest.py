@@ -12,6 +12,7 @@ from judge import AbsoluteJudgment, PairwiseJudgment  # noqa: E402
 from memory import MemoryUpdate  # noqa: E402
 from semantic_triage import SemanticTriageResult  # noqa: E402
 from workflow import CriticEvaluation  # noqa: E402
+from affect_policy import AffectEstimate
 
 
 def sem(categories=(), temporal="current", confidence="high", abstain=False, implicit=False, evidence=("kanıt",)):
@@ -60,6 +61,8 @@ class Backend:
         self.critic_fn = None              # varsa: prompt -> CriticEvaluation (kuyruğun yerine dinamik davranış)
         self.semantic = [sem()]            # varsayılan: risk yok, şimdiki zaman, yüksek güven
         self.memory_updates = [MemoryUpdate()]
+        self.affect = [AffectEstimate(emotion='sadness', valence='negative', arousal='low',
+                                    confidence='high', evidence=['çok yoruldum'])]
         self.calls = []  # (tür, prompt metni)
 
     def _next(self, queue):
@@ -105,6 +108,8 @@ class FakeModel:
                     return backend._next(backend.semantic)
                 if name == "MemoryUpdate":
                     return backend._next(backend.memory_updates)
+                if name == 'AffectEstimate':
+                    return backend._next(backend.affect)
                 raise AssertionError(f"beklenmeyen şema {name}")
 
         return Structured()

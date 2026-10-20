@@ -155,10 +155,11 @@ def test_unknown_mode_raises():
         run_pipeline("x", mode="nope")
 
 
-def test_input_is_truncated(backend, monkeypatch):
+def test_overlong_input_is_not_silently_truncated(backend, monkeypatch):
     monkeypatch.setattr(config, "MAX_INPUT_CHARS", 20)
-    run_pipeline("a" * 500, mode="vanilla")
-    assert backend.calls  # çalıştı; kesme hata üretmedi
+    result = run_pipeline("a" * 500 + ' Kendimi öldüreceğim.', mode="full")
+    assert not backend.calls
+    assert result['error'] == 'input_too_long' and result['needs_human_review']
 
 
 def test_format_history_excludes_nothing_and_windows():

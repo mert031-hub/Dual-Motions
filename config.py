@@ -34,6 +34,8 @@ MODEL_NAME: str = os.getenv("MODEL_NAME", "openai/gpt-oss-120b")
 # Varsayılan: üretim modeliyle aynı.
 CRITIC_MODEL: str = os.getenv("CRITIC_MODEL", MODEL_NAME)
 SEMANTIC_MODEL: str = os.getenv("SEMANTIC_MODEL", MODEL_NAME)
+MEMORY_MODEL: str = os.getenv("MEMORY_MODEL", MODEL_NAME)
+AFFECT_MODEL: str = os.getenv("AFFECT_MODEL", MODEL_NAME)
 
 POLICY_TEMPERATURE: float = _float("POLICY_TEMPERATURE", 0.6)
 VANILLA_TEMPERATURE: float = _float("VANILLA_TEMPERATURE", 0.7)
@@ -61,7 +63,7 @@ HISTORY_WINDOW: int = _int("HISTORY_WINDOW", 10)     # Policy/Critic'e verilen s
 # Sürümleme (deney kayıtları için)
 # ------------------------------------------------------------------
 PROMPT_VERSION: str = "2026.10.v3"
-CODE_VERSION: str = "v2.1-faz3-faz4"
+CODE_VERSION: str = "v3-research-prototype"
 
 # ------------------------------------------------------------------
 # Sistem kolları (ablation).  Word taslağındaki A/B/C/D + ek kontrol kolu.
@@ -93,7 +95,7 @@ SYSTEMS: Dict[str, Dict[str, object]] = {
         "label": "Kontrol: Policy Only",
         "use_triage": False, "use_semantic": False, "use_critic": False, "use_policy": True,
     },
-    # Faz 3: hibrit trijaj (kural + semantik). H2: hibrit, yalnız kuraldan daha yüksek kriz yakalama sağlar mı?
+    # Ek deney: hibrit trijaj. Ana slayttaki H2 (Critic etkisi) ile karıştırılmamalı.
     "hybrid_triage_only": {
         "label": "E1: Hibrit Triage Only",
         "use_triage": True, "use_semantic": True, "use_critic": False, "use_policy": True,
@@ -105,6 +107,18 @@ SYSTEMS: Dict[str, Dict[str, object]] = {
 }
 
 DEFAULT_ABLATION_SYSTEMS: List[str] = ["vanilla", "triage_only", "critic_only", "full"]
+
+# Primary study arms match slide 9. Identical base prompt, temperature and emergency
+# gate in every arm. Only the adaptive strategy and/or Critic are toggled.
+for _key, _label, _adaptive, _critic in (
+    ('study_baseline', 'A: Baseline (slayt)', False, False),
+    ('study_policy', 'B: Affect + Policy (slayt)', True, False),
+    ('study_critic', 'C: Critic Only (slayt)', False, True),
+    ('study_full', 'D: Affect + Policy + Critic (slayt)', True, True),
+):
+    SYSTEMS[_key] = dict(label=_label, use_triage=True, use_semantic=False, use_critic=_critic,
+                         use_policy=True, adaptive_policy=_adaptive, study_arm=True)
+DEFAULT_ABLATION_SYSTEMS = ['study_baseline', 'study_policy', 'study_critic', 'study_full']
 
 # ------------------------------------------------------------------
 # Duygu durumu -> iletişim yönergesi (TASLAK: klinisyen onayı gerekir)

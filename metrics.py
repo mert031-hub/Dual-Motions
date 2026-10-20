@@ -53,7 +53,7 @@ def bootstrap_ci(values: Sequence[float], n_boot: int = 2000, seed: int = 0, alp
 
 
 def cohens_kappa(a: Sequence[Any], b: Sequence[Any]) -> float:
-    """Cohen's kappa (nominal). Perfect uyum ve beklenen uyum=1 durumunda 1.0; veri yoksa NaN."""
+    """Cohen's kappa; no data or a constant shared category is undefined (NaN)."""
     a, b = list(a), list(b)
     n = len(a)
     if n == 0 or n != len(b):
@@ -62,7 +62,7 @@ def cohens_kappa(a: Sequence[Any], b: Sequence[Any]) -> float:
     po = sum(x == y for x, y in zip(a, b)) / n
     pe = sum((a.count(l) / n) * (b.count(l) / n) for l in labels)
     if pe == 1:
-        return 1.0 if po == 1 else 0.0
+        return NAN
     return (po - pe) / (1 - pe)
 
 
@@ -73,13 +73,15 @@ def weighted_kappa(a: Sequence[int], b: Sequence[int], labels: Sequence[int] = (
     if n == 0 or n != len(b) or k < 2:
         return NAN
     idx = {l: i for i, l in enumerate(labels)}
+    if any(x not in idx or y not in idx for x, y in zip(a, b)):
+        raise ValueError('Scores must be members of the ordinal label set')
     obs = np.zeros((k, k))
     for x, y in zip(a, b):
-        obs[idx[int(round(x))], idx[int(round(y))]] += 1
+        obs[idx[x], idx[y]] += 1
     exp = np.outer(obs.sum(axis=1), obs.sum(axis=0)) / n
     w = np.array([[((i - j) ** 2) / ((k - 1) ** 2) for j in range(k)] for i in range(k)])
     denom = (w * exp).sum()
-    return 1.0 if denom == 0 else float(1 - (w * obs).sum() / denom)
+    return NAN if denom == 0 else float(1 - (w * obs).sum() / denom)
 
 
 def binary_metrics(tp: int, fp: int, tn: int, fn: int) -> Dict[str, Any]:
@@ -110,16 +112,17 @@ def triage_metrics(
     cases: List[Dict[str, Any]],
     detector: Optional[Callable[[str], List[str]]] = None,
     breakdown_by: Sequence[str] = ("language", "adversarial_type", "category"),
+    predictions: Optional[Dict[str, List[str]]] = None,
 ) -> Dict[str, Any]:
     """Trijaj katmanını etiketli vakalar üzerinde ölçer. `detector(message) -> bayrak adları listesi`.
 
-    Hibrit trijaj (Faz 3) aynı imzayla takılıp kural tabanlıyla karşılaştırılabilir (H2).
+    Hibrit trijaj aynı imzayla ek deney olarak kural tabanlıyla karşılaştırılabilir.
     """
     detector = detector or default_detector
     labeled = [c for c in cases if c.get("expected_red_flag") is not None]
     rows = []
     for c in labeled:
-        names = detector(c["user_message"])
+        names = predictions[str(c["id"])] if predictions is not None else detector(c["user_message"])
         pred = len(names) > 0
         truth = bool(c["expected_red_flag"])
         rows.append({
@@ -257,11 +260,12 @@ def systems_table(summary: pd.DataFrame) -> pd.DataFrame:
 
 def paired_comparison(df: pd.DataFrame, system_a: str, system_b: str, metric: str = "safety",
                       n_boot: int = 2000, seed: int = 0) -> Dict[str, Any]:
-    """Aynı (vaka, tekrar) için A - B farkı; ortalama fark + bootstrap GA + üstünlük sayıları."""
+    """Vaka düzeyinde A-B farkı; aynı vakanın tekrarları bağımsız örnek sayılmaz."""
     valid = df[(df["error"].fillna("") == "") & (df["judged"] == True)]  # noqa: E712
     a = valid[valid["system"] == system_a].set_index(["case_id", "repeat"])[metric]
     b = valid[valid["system"] == system_b].set_index(["case_id", "repeat"])[metric]
     joined = pd.concat([a.rename("a"), b.rename("b")], axis=1, join="inner").dropna()
+    joined = joined.groupby(level='case_id').mean()
     if joined.empty:
         return {"n": 0, "mean_diff": NAN, "ci": (NAN, NAN), "a_better": 0, "b_better": 0, "ties": 0}
     diff = (joined["a"] - joined["b"]).astype(float)

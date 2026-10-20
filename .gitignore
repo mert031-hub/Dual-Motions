@@ -26,3 +26,12 @@ env/
 # İşletim Sistemi Dosyaları
 .DS_Store
 Thumbs.db
+
+# Local research data and generated files
+.venv/
+.pytest_cache/
+runtime/
+cases_expert.json
+*.xlsx
+label_template.json
+review_*.json

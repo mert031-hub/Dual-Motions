@@ -1,4 +1,5 @@
 import html
+import uuid
 
 import pandas as pd
 import streamlit as st
@@ -9,6 +10,9 @@ import metrics
 from batch_tester import run_batch_benchmark
 from cases import describe_cases, load_cases
 from workflow import format_history, run_pipeline
+from memory import ClinicalMemory
+from research_privacy import AuditLog
+from app_auth import require_access
 
 # --- SAYFA YAPILANDIRMASI ---
 st.set_page_config(
@@ -17,6 +21,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+require_access()
 
 st.markdown("""
     <style>
@@ -42,6 +48,10 @@ if "turn" not in st.session_state:
     st.session_state.turn = None          # son turun {result, vanilla, comparison, comparison_error, system_key}
 if "benchmark" not in st.session_state:
     st.session_state.benchmark = None
+if 'clinical_memory' not in st.session_state:
+    st.session_state.clinical_memory = ClinicalMemory()
+if 'audit_session' not in st.session_state:
+    st.session_state.audit_session = uuid.uuid4().hex
 
 SYSTEM_KEYS = list(config.SYSTEMS.keys())
 LABEL = {k: v["label"] for k, v in config.SYSTEMS.items()}
@@ -60,25 +70,50 @@ with st.sidebar:
         "Hedef / Çıktı Dili:", ("Auto-Detect", "Turkish", "Russian", "German", "English", "French", "Spanish")
     )
     chat_system = st.selectbox(
-        "Sohbet sistemi (ablation kolu):", SYSTEM_KEYS, index=SYSTEM_KEYS.index("full"), format_func=lambda k: LABEL[k]
+        "Sohbet sistemi (ablation kolu):", SYSTEM_KEYS, index=SYSTEM_KEYS.index("study_full"), format_func=lambda k: LABEL[k]
     )
+    affect_mode = st.selectbox('Duygu kaynağı', ['manual', 'model'],
+                               format_func=lambda v: 'Elle verilen deney koşulu' if v == 'manual' else 'Metinden tahmin (deneysel)')
     live_compare = st.checkbox("Canlı kör karşılaştırma (Yalın model ile)", value=True,
                                help="Her mesajda Yalın model + yargıç çağrılır; maliyeti ve gecikmeyi artırır.")
     warn = judge.same_family_warning()
+    use_memory = st.checkbox('Yapılandırılmış bellek (deneysel, ek model çağrısı)', value=False)
+    if use_memory:
+        st.caption('Hasta beyanları oturum içinde tutulur; risk olayları kendiliğinden silinmez. Klinik olarak doğrulanmamıştır.')
     if warn:
         st.caption(f"⚠️ {warn}")
     if st.button("Tüm Sohbeti ve Analizi Temizle"):
+        AuditLog().delete_session(st.session_state.audit_session)
         st.session_state.messages = []
         st.session_state.turn = None
+        st.session_state.benchmark = None
+        st.session_state.clinical_memory = ClinicalMemory()
+        st.session_state.audit_session = uuid.uuid4().hex
         st.rerun()
 
 
 def run_turn(user_text: str, history_text: str):
     """Seçili sistemi çalıştırır; istenirse kör yargıçla Yalın modelle karşılaştırır."""
-    result = run_pipeline(user_text, emotion_input, language_choice, history_text, chat_system)
+    memory = st.session_state.clinical_memory.render() if use_memory else ''
+    result = run_pipeline(user_text, emotion_input, language_choice, history_text, chat_system,
+                          clinical_memory=memory, affect_mode=affect_mode)
+    if use_memory:
+        previous = next((m['content'] for m in reversed(st.session_state.messages[:-1]) if m['role'] == 'assistant'), '')
+        st.session_state.clinical_memory.update_from_message(
+            user_text, result['triage_flags'], len(st.session_state.messages), previous,
+            extract=result['triage_tier'] != 1)
+        if st.session_state.clinical_memory.last_error:
+            result['needs_human_review'] = True
+            st.warning('Bellek çıkarımı tamamlanamadı; mevcut risk kayıtları korundu. İnsan incelemesi gerekiyor.')
+    AuditLog().record(st.session_state.audit_session, 'turn', system=chat_system,
+                      model=config.MODEL_NAME, triage_tier=result['triage_tier'],
+                      needs_human_review=result['needs_human_review'], llm_calls=result['llm_calls'],
+                      latency_s=result['latency_s'], error_type=result['error'].split(':')[0] if result['error'] else '')
     turn = {"result": result, "system_key": chat_system, "vanilla": None, "comparison": None, "comparison_error": ""}
-    if live_compare and chat_system != "vanilla" and result["final_output"] and not result["error"]:
-        vanilla = run_pipeline(user_text, emotion_input, language_choice, history_text, "vanilla")
+    baseline_key = 'study_baseline' if config.SYSTEMS[chat_system].get('study_arm') else 'vanilla'
+    if live_compare and chat_system != baseline_key and result['triage_tier'] != 1 and result["final_output"] and not result["error"]:
+        vanilla = run_pipeline(user_text, emotion_input, language_choice, history_text, baseline_key,
+                               clinical_memory=memory, affect_mode=affect_mode)
         turn["vanilla"] = vanilla
         if vanilla["final_output"] and not vanilla["error"]:
             ctx = {"user_message": user_text, "emotion": emotion_input, "language": language_choice, "expected_risk": None}
@@ -142,11 +177,12 @@ with tab_chat:
             if r["error"]:
                 st.error(f"Teknik hata: {r['error']}")
 
-            st.markdown("**Kural tabanlı trijaj bayrakları**")
+            st.markdown("**Trijaj bayrakları**")
             if r["triage_flags"]:
                 st.dataframe(pd.DataFrame([{
                     "Bayrak": f["name"], "Eşleşen ifade": f["matched_keyword"], "Eylem": f["action"],
                     "Mod": f["mode"], "Öncelik": f["priority"],
+                    "Kaynak": f.get('source', 'rule'),
                 } for f in r["triage_flags"]]), hide_index=True)
                 if r["triage_directives"]:
                     with st.expander("Policy'ye verilen zorunlu yönergeler"):
@@ -155,6 +191,15 @@ with tab_chat:
             else:
                 st.caption("Eşleşen kural yok" if r["triage_decision"] != "Atlandı" else "Bu sistem kolunda trijaj kapalı")
 
+            if r.get('semantic_meta', {}).get('abstained'):
+                st.warning('Semantik değerlendirme belirsiz veya kullanılamıyor; bu durum risksiz sonuç anlamına gelmez.')
+            if r.get('affect_meta'):
+                st.caption(f"Duygu kaynağı: {r['affect_meta'].get('source', '-')} · Strateji: {r.get('response_policy', {}).get('strategy', '-')}")
+                if r['affect_meta'].get('error'):
+                    st.warning('Duygu tahmini kullanılamıyor; belirsizlik stratejisi seçildi.')
+            if use_memory:
+                with st.expander('Oturum belleği — doğrulanmamış hasta beyanları'):
+                    st.json(st.session_state.clinical_memory.model_dump())
             st.markdown("**Güvenlik Kapısı: Critic**")
             decision = r["critic_decision"] or "-"
             if decision == "Onaylandı":
@@ -235,7 +280,7 @@ with tab_benchmark:
     c2.metric("Etiketli vaka (sentetik/geçici dahil)", desc["labeled"])
     c3.metric("Etiket durumları", ", ".join(f"{k}: {v}" for k, v in desc["by_status"].items()) or "-")
 
-    if desc["by_status"].get("expert_labeled", 0) == 0:
+    if desc['expert_labeled'] == 0:
         st.warning(
             "Henüz **uzman etiketli** vaka yok. Crisis Recall / FNR / FPR için vakalara `expected_red_flag` etiketi "
             "gerekir (`cases_expert.json`). Mevcut sayılar yalnızca altyapı denemesidir; bilimsel sonuç olarak raporlamayın."
@@ -269,7 +314,9 @@ with tab_benchmark:
     with s2:
         workers = st.slider("Paralel iş parçacığı (rate limit için düşük tutun)", 1, 6, 2)
         judge_on = st.checkbox("Kör yargıçla puanla", value=True)
-        pair_on = st.checkbox("Kör A/B: Yalın vs Full", value=True)
+        pair_on = st.checkbox("Kör A/B: Baseline vs birleşik sistem", value=True)
+        persist_text = st.checkbox('Sentetik vaka metinlerini deney dosyalarına kaydet', value=False,
+                                   help='Varsayılan kayıt metinsizdir. Yalnızca onaylı sentetik araştırma verisi için açın.')
 
     n_cases = len(all_cases) if max_cases == 0 else min(int(max_cases), len(all_cases))
     n_runs = n_cases * len(systems_sel) * int(repeats)
@@ -286,10 +333,12 @@ with tab_benchmark:
             status.text(f"{stage}: {done}/{total}")
 
         try:
-            pairs = [("vanilla", "full")] if (pair_on and {"vanilla", "full"} <= set(systems_sel)) else []
+            pairs = (None if pair_on else [])
             st.session_state.benchmark = run_batch_benchmark(
                 cases=all_cases, systems=systems_sel, repeats=int(repeats), pairs=pairs,
                 judge_enabled=judge_on, max_workers=workers, max_cases=int(max_cases) or None, progress=on_progress,
+                persist_text=persist_text,
+                affect_mode=affect_mode,
             )
             status.text("Tamamlandı.")
         except Exception as exc:  # noqa: BLE001

@@ -66,6 +66,15 @@ def validate_case(case: Dict[str, Any]) -> List[str]:
 
 def normalize_case(raw: Dict[str, Any], source: str, default_status: str) -> Dict[str, Any]:
     """Eksik alanları varsayılanlarla doldurur."""
+    if not isinstance(raw, dict):
+        raise ValueError('Vaka kaydı bir JSON nesnesi olmalı')
+    flags = raw.get('expected_flags', [])
+    if not isinstance(flags, list) or any(not isinstance(f, str) for f in flags):
+        raise ValueError('expected_flags bir metin listesi olmalı')
+    if (default_status == 'expert_labeled' and raw.get('expected_red_flag') is not None
+            and raw.get('label_status', default_status) == 'expert_labeled'
+            and (not isinstance(raw.get('labeler'), str) or not raw['labeler'].strip())):
+        raise ValueError('Uzman etiketi için labeler zorunlu')
     legacy_risk = raw.get("risk_level")
     expected_risk = raw.get("expected_risk")
     if expected_risk is None and legacy_risk in VALID_RISK:
@@ -79,11 +88,13 @@ def normalize_case(raw: Dict[str, Any], source: str, default_status: str) -> Dic
         "language": raw.get("language", "tr"),
         "user_message": raw.get("user_message", raw.get("hasta_mesaji", "")),
         "emotion": raw.get("emotion", raw.get("beklenen_duygu", "Normal / Sakin")),
+        "emotion_source": raw.get('emotion_source', 'provided_condition' if raw.get('emotion') or raw.get('beklenen_duygu') else 'default_unverified'),
         "category": raw.get("category", raw.get("clinical_theme", raw.get("kategori", ""))),
         "expected_red_flag": expected_red_flag,
-        "expected_flags": list(raw.get("expected_flags", [])),
+        "expected_flags": flags,
         "expected_risk": expected_risk,
         "adversarial_type": raw.get("adversarial_type"),
+        "variant_of": raw.get("variant_of"),
         "label_status": raw.get("label_status", default_status),
         "labeler": raw.get("labeler", ""),
         "source": raw.get("source", source),
@@ -131,14 +142,16 @@ def _load_expert_json(path: str) -> List[Dict[str, Any]]:
         data = json.load(fh)
     if isinstance(data, dict):
         data = data.get("cases", [])
-    return [normalize_case(c, source=os.path.basename(path), default_status="expert_labeled") for c in data]
+    if not isinstance(data, list):
+        raise ValueError('cases bir liste olmalı')
+    normalized = [normalize_case(c, source=os.path.basename(path), default_status="expert_labeled") for c in data]
+    if len({c['id'] for c in normalized}) != len(normalized):
+        raise ValueError('Uzman dosyasında tekrarlı vaka kimliği')
+    return normalized
 
 
 def _load_legacy() -> List[Dict[str, Any]]:
-    try:
-        from cases_legacy import CASES as legacy  # type: ignore
-    except ImportError:
-        return []
+    from cases_legacy import CASES as legacy
     return [normalize_case(c, source="cases_legacy.py", default_status="legacy_unreviewed") for c in legacy]
 
 
@@ -197,7 +210,9 @@ def describe_cases(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
     for c in cases:
         by_status[c["label_status"]] = by_status.get(c["label_status"], 0) + 1
         labeled += c["expected_red_flag"] is not None
-    return {"total": len(cases), "labeled": labeled, "by_status": by_status}
+    return {"total": len(cases), "labeled": labeled, "by_status": by_status,
+            'expert_labeled': sum(c['label_status'] == 'expert_labeled' and c['expected_red_flag'] is not None for c in cases),
+            'expert_uncertain': sum(c['label_status'] == 'expert_labeled' and c['expected_red_flag'] is None for c in cases)}
 
 
 # Geriye dönük uyumluluk: eski kod `from cases import CASES` yapıyorsa

@@ -25,9 +25,10 @@ import pandas as pd
 from cases import VALID_EMOTIONS, VALID_RISK, load_cases
 from metrics import wilson_interval
 from red_flags import RED_FLAG_RULES, _fold
+from storage import write_json
 
 COLUMNS = ["id", "user_message", "language", "emotion", "expected_red_flag", "expected_flags",
-           "expected_risk", "adversarial_type", "variant_of", "labeler", "notes", "legacy_risk_level"]
+           "expected_risk", "adversarial_type", "variant_of", "labeler", "notes"]
 EDITABLE = ["expected_red_flag", "expected_flags", "expected_risk", "adversarial_type", "variant_of", "labeler", "notes"]
 ADVERSARIAL_TYPES = ["", "implicit", "typo", "code_switch", "english", "quoted", "past_tense", "negation",
                      "false_positive_trap", "colloquial", "prompt_injection", "control"]
@@ -45,12 +46,11 @@ def _base_rows(include_starter: bool) -> List[Dict[str, Any]]:
     cases = load_cases(include_starter=include_starter, include_expert=False)
     rows = []
     for c in cases:
-        legacy = re.search(r"legacy_risk_level=(\w+)", c.get("notes", ""))
         rows.append({
             "id": c["id"], "user_message": c["user_message"], "language": c.get("language", "tr"),
             "emotion": c.get("emotion", "Normal / Sakin"), "expected_red_flag": "", "expected_flags": "",
             "expected_risk": "", "adversarial_type": c.get("adversarial_type") or "", "variant_of": "",
-            "labeler": "", "notes": "", "legacy_risk_level": legacy.group(1) if legacy else "",
+            "labeler": "", "notes": "",
         })
     return rows
 
@@ -58,10 +58,12 @@ def _base_rows(include_starter: bool) -> List[Dict[str, Any]]:
 def _blank_rows(prefix: str, n: int, emotion: str = "Normal / Sakin") -> List[Dict[str, Any]]:
     return [{"id": f"{prefix}{i:02d}", "user_message": "", "language": "tr", "emotion": emotion,
              "expected_red_flag": "", "expected_flags": "", "expected_risk": "", "adversarial_type": "",
-             "variant_of": "", "labeler": "", "notes": "", "legacy_risk_level": ""} for i in range(1, n + 1)]
+             "variant_of": "", "labeler": "", "notes": ""} for i in range(1, n + 1)]
 
 
 def template_dataframe(include_starter: bool = False, n_controls: int = 30, n_variants: int = 20) -> pd.DataFrame:
+    if n_controls < 0 or n_variants < 0:
+        raise ValueError("Satır sayıları negatif olamaz")
     rows = _base_rows(include_starter) + _blank_rows("K", n_controls) + _blank_rows("V", n_variants)
     return pd.DataFrame(rows, columns=COLUMNS)
 
@@ -80,7 +82,6 @@ def _explanation_rows() -> List[Tuple[str, str]]:
         ("variant_of", "V satırlarında: varyantın türetildiği vakanın id'si (örn. 8)."),
         ("labeler", "Etiketleyen kişi (boşsa içe aktarırken varsayılan ad kullanılır)."),
         ("notes", "Serbest not (belirsizlik nedeni, klinik gerekçe vb.)."),
-        ("legacy_risk_level", "Eski dosyadaki risk_level (yalnızca bilgi; içe aktarılmaz)."),
     ]
 
 
@@ -110,7 +111,7 @@ def export_template(out_path: str, include_starter: bool = False, n_controls: in
         cell.fill = head_fill
         cell.alignment = Alignment(wrap_text=True, vertical="center")
     widths = {"id": 7, "user_message": 70, "language": 9, "emotion": 15, "expected_red_flag": 14, "expected_flags": 28,
-              "expected_risk": 12, "adversarial_type": 18, "variant_of": 10, "labeler": 16, "notes": 36, "legacy_risk_level": 12}
+              "expected_risk": 12, "adversarial_type": 18, "variant_of": 10, "labeler": 16, "notes": 36}
     for i, col in enumerate(COLUMNS, start=1):
         ws.column_dimensions[get_column_letter(i)].width = widths[col]
     last = ws.max_row
@@ -141,9 +142,9 @@ def export_template(out_path: str, include_starter: bool = False, n_controls: in
     for k, v in _explanation_rows():
         guide.append([k, v])
     guide.append([])
-    guide.append(["Kategori anahtarı (expected_flags)", "Açıklama / risk / sistem eylemi"])
+    guide.append(["Kategori anahtarı (expected_flags)", "Klinik kategori açıklaması"])
     for key, rule in RED_FLAG_RULES.items():
-        guide.append([key, f"{rule['description']} | risk: {rule['risk_level']} | eylem: {rule['action']}"])
+        guide.append([key, rule['description']])
     guide.column_dimensions["A"].width = 36
     guide.column_dimensions["B"].width = 120
     for row in guide.iter_rows():
@@ -197,11 +198,11 @@ def _parse_flags(value: str) -> Tuple[List[str], List[str]]:
 
 
 def import_labels(in_path: str, out_path: str = "cases_expert.json", default_labeler: str = "",
-                  merge: bool = True) -> Dict[str, Any]:
+                  merge: bool = True, allow_message_change: bool = False) -> Dict[str, Any]:
     """Doldurulmuş şablonu doğrular ve `cases_expert.json` dosyasına yazar.
 
-    Geçerli satırlar yazılır, hatalı satırlar `errors` içinde raporlanır (hiçbiri sessizce atlanmaz).
-    BELİRSİZ veya boş etiketli satırlar dosyaya yazılmaz (metriklere girmez), sayısı raporlanır.
+    Hata varsa hiçbir değişiklik yazılmaz. Açık BELİRSİZ eski etiketi None ile iptal eder.
+    Boş etiket incelenmemiş sayılır; mevcut etiketi değiştirmez.
     """
     df = _read_table(in_path)
     missing_cols = [c for c in ("id", "user_message", "expected_red_flag") if c not in df.columns]
@@ -226,6 +227,8 @@ def import_labels(in_path: str, out_path: str = "cases_expert.json", default_lab
             n_empty += 1
             continue
         if not msg:
+            if str(row['expected_red_flag']).strip():
+                errors.append({'satır':line, 'id':cid, 'hata':'Etiket var ama vaka metni boş'})
             n_empty += 1  # boş K/V satırı
             continue
         row_err: List[str] = []
@@ -249,21 +252,29 @@ def import_labels(in_path: str, out_path: str = "cases_expert.json", default_lab
         if emotion not in VALID_EMOTIONS:
             row_err.append(f"emotion geçersiz: {emotion!r}")
         language = str(row["language"]).strip().lower() or "tr"
+        labeler = str(row["labeler"]).strip() or default_labeler.strip()
+        if raw_label and not labeler:
+            row_err.append("Etiketleyen kişi zorunlu (labeler veya --labeler)")
+        if cid in base and base[cid]["user_message"].strip() != msg and not allow_message_change:
+            row_err.append("Mevcut vaka metni değişmiş; yeni id kullanın veya --allow-message-change seçin")
+        if flag is False and flags:
+            row_err.append("HAYIR etiketli vakada expected_flags boş olmalı")
 
         if row_err:
             errors.append({"satır": line, "id": cid, "hata": "; ".join(row_err)})
             continue
 
-        if flag is None:
-            if raw_label == "":
-                is_new = cid[:1] in ("K", "V") and cid not in base
-                if is_new:
-                    errors.append({"satır": line, "id": cid, "hata": "yeni vaka yazılmış ama expected_red_flag boş"})
-                else:
-                    n_unlabeled += 1
+        if flag is None and raw_label == "":
+            is_new = cid not in base
+            if is_new:
+                errors.append({"satır": line, "id": cid, "hata": "yeni vaka yazılmış ama expected_red_flag boş"})
             else:
-                n_unlabeled += 1  # BELİRSİZ
+                n_unlabeled += 1
             continue
+
+        if flag is None:
+            n_unlabeled += 1
+            flags = []
 
         if cid in base and base[cid]["user_message"].strip() != msg:
             warnings.append({"satır": line, "id": cid, "uyarı": "mevcut vakanın mesajı değiştirilmiş"})
@@ -283,9 +294,12 @@ def import_labels(in_path: str, out_path: str = "cases_expert.json", default_lab
         cases.append({
             "id": cid, "title": base.get(cid, {}).get("title", f"Uzman vakası {cid}"), "language": language,
             "user_message": msg, "emotion": emotion, "category": base.get(cid, {}).get("category", "expert_new"),
+            "emotion_source": (base[cid].get('emotion_source', 'default_unverified')
+                               if cid in base and emotion == base[cid].get('emotion') else 'imported_condition'),
             "expected_red_flag": flag, "expected_flags": flags, "expected_risk": risk, "adversarial_type": adv,
+            "variant_of": str(row["variant_of"]).strip() or None,
             "label_status": "expert_labeled",
-            "labeler": str(row["labeler"]).strip() or default_labeler, "source": os.path.basename(in_path), "notes": note,
+            "labeler": labeler, "source": os.path.basename(in_path), "notes": note,
         })
 
     merged: Dict[str, Dict[str, Any]] = {}
@@ -302,11 +316,11 @@ def import_labels(in_path: str, out_path: str = "cases_expert.json", default_lab
                  "n_cases": len(merged)},
         "cases": list(merged.values()),
     }
-    with open(out_path, "w", encoding="utf-8") as fh:
-        json.dump(payload, fh, ensure_ascii=False, indent=2)
+    if not errors:
+        write_json(out_path, payload)
 
     return {
-        "out_path": out_path, "n_rows": len(df), "n_imported": len(cases), "n_unlabeled_or_unsure": n_unlabeled,
+        "out_path": out_path, "written": not errors, "n_rows": len(df), "n_imported": len(cases) if not errors else 0, "n_unlabeled_or_unsure": n_unlabeled,
         "n_empty_rows": n_empty, "errors": errors, "warnings": warnings,
         "balance": label_balance(list(merged.values())),
     }
@@ -338,7 +352,7 @@ def label_balance(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
             if half > 0.10:
                 notes.append(f"{name} n={n}: tahmini %95 GA yarı genişliği ≈ ±{half:.2f}; daha fazla vaka kesinliği artırır.")
     if len(by_lang) < 2:
-        notes.append("Tek dilli veri: çok dilli sağlamlık (H3) test edilemez.")
+        notes.append("Tek dilli veri: ek çok dilli sağlamlık deneyi yapılamaz.")
     if not any(k != "none" for k in by_adv):
         notes.append("Zor vaka türü (örtük, yazım hatalı, İngilizce vb.) yok: kural motoru kırılganlığı ölçülemez.")
     return {"n_labeled": len(labeled), "n_positive": len(pos), "n_negative": len(neg),
@@ -346,7 +360,7 @@ def label_balance(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def _print_report(rep: Dict[str, Any]) -> None:
-    print(f"\nYazılan dosya: {rep['out_path']}")
+    print(f"\nHedef dosya: {rep['out_path']} · {'yazıldı' if rep['written'] else 'hatalar nedeniyle değiştirilmedi'}")
     print(f"Satır: {rep['n_rows']} · içe aktarılan: {rep['n_imported']} · etiketsiz/belirsiz: {rep['n_unlabeled_or_unsure']} · boş: {rep['n_empty_rows']}")
     for e in rep["errors"]:
         print(f"  HATA   satır {e['satır']} ({e['id']}): {e['hata']}")
@@ -369,12 +383,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     im.add_argument("--out", default="cases_expert.json")
     im.add_argument("--labeler", default="")
     im.add_argument("--no-merge", action="store_true")
+    im.add_argument("--allow-message-change", action="store_true")
     args = ap.parse_args(argv)
 
     if args.cmd == "export":
         print("Şablon yazıldı:", export_template(args.out, include_starter=args.include_starter))
         return 0
-    rep = import_labels(args.inp, args.out, args.labeler, merge=not args.no_merge)
+    rep = import_labels(args.inp, args.out, args.labeler, merge=not args.no_merge,
+                        allow_message_change=args.allow_message_change)
     _print_report(rep)
     return 1 if rep["errors"] else 0
 

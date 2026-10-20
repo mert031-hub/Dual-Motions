@@ -1,0 +1,19 @@
+.git
+.env*
+__pycache__
+**/__pycache__
+*.pyc
+.pytest_cache
+venv
+.venv
+env
+runtime
+benchmark_runs
+benchmark_raporu.csv
+cases_expert.json
+*.xlsx
+*.pdf
+*.docx
+Old files
+test_*.py
+conftest.py

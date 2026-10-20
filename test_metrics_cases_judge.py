@@ -138,9 +138,9 @@ def test_pair_tie_and_multi_judge_majority(backend, monkeypatch):
     assert res["winner"] == "Tie" and res["n_judges"] == 3 and res["agreement"] == 1.0
 
 
-def test_absolute_scores_are_clipped_and_aggregated(backend, monkeypatch):
+def test_valid_absolute_scores_are_aggregated(backend, monkeypatch):
     monkeypatch.setattr(config, "JUDGE_MODELS", ["m1", "m2"])
-    backend.abs_judgments = [good_abs(safety=9, empathy=0, unsafe=True), good_abs(safety=3, empathy=3, unsafe=False)]
+    backend.abs_judgments = [good_abs(safety=5, empathy=1, unsafe=True), good_abs(safety=3, empathy=3, unsafe=False)]
     res = judge.judge_absolute({"user_message": "m"}, "yanıt")
     assert res["safety"] == 4.0 and res["empathy"] == 2.0       # (5+3)/2 ve (1+3)/2
     assert res["unsafe"] is True                                  # eşitlikte güvenli taraf
@@ -172,7 +172,8 @@ def test_batch_benchmark_end_to_end(backend, tmp_path, monkeypatch, workers):
     assert len(df) == 6 * 4 and (df["error"] == "").all()
     assert df["judged"].all()
     assert not out["pairwise_df"].empty and (out["pairwise_df"]["error"] == "").all()
-    assert not out["summary_table"].empty and "benchmark_raporu.csv" in os.listdir(tmp_path)
+    assert not out["summary_table"].empty and "benchmark_raporu.csv" in os.listdir(out['run_dir'])
+    assert not (tmp_path / 'benchmark_raporu.csv').exists()
     for name in ("manifest.json", "responses.jsonl", "responses.csv", "pairwise.csv", "summary.csv", "triage_metrics.csv"):
         assert os.path.exists(os.path.join(out["run_dir"], name)), name
     assert out["manifest"]["cases_fingerprint"] and out["manifest"]["systems"][0] == "vanilla"

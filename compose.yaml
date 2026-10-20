@@ -1,0 +1,19 @@
+services:
+  research:
+    build: .
+    ports:
+      - "127.0.0.1:8501:8501"
+    environment:
+      APP_REQUIRE_AUTH: "1"
+      APP_PASSWORD_HASH: ${APP_PASSWORD_HASH:?Set a research password hash securely}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      MODEL_NAME: ${MODEL_NAME:-openai/gpt-oss-120b}
+      JUDGE_MODELS: ${JUDGE_MODELS:-openai/gpt-oss-120b}
+    volumes:
+      - research_data:/app/runtime
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+volumes:
+  research_data:
