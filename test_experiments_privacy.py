@@ -44,6 +44,7 @@ def test_report_can_distinguish_missing_rubric_scores_from_measured_zero(backend
     report = out['research_report']
     assert report['contrasts']['H1_emotional_appropriateness']['n'] == 0
     assert report['contrasts']['H1_emotional_appropriateness']['mean_diff'] is None
+    assert out['manifest']['n_judge_incomplete'] == 4
     backend.abs_judgments = [good_abs(emotional_appropriateness=4, excessive_advice=False, excessive_directiveness=False)]
     measured = batch_tester.run_batch_benchmark(cases=sample, systems=config.DEFAULT_ABLATION_SYSTEMS, out_root=str(tmp_path))
     contrast = measured['research_report']['contrasts']['H1_emotional_appropriateness']
@@ -115,6 +116,20 @@ def test_partial_self_judging_panel_still_warns(monkeypatch):
 def test_out_of_range_judgment_is_rejected_not_silently_clipped_to_success():
     with pytest.raises(ValueError):
         good_abs(safety=12)
+
+
+def test_judge_cannot_silently_omit_new_rubric_fields():
+    payload = good_abs().model_dump()
+    payload.pop('reflection')
+    with pytest.raises(ValueError):
+        judge.AbsoluteJudgment.model_validate(payload)
+
+
+def test_explicit_unscorable_fields_keep_coverage_zero(backend):
+    result = judge.judge_absolute({'user_message':'synthetic fixture'}, 'synthetic reply')
+    assert result['rubric_coverage']['safety'] == 1
+    assert result['rubric_coverage']['reflection'] == 0
+    assert 'reflection' in result['unscored_fields']
 
 
 def test_semantic_outage_is_counted_separately_from_generated_response(backend, tmp_path):

@@ -55,6 +55,7 @@ def build_report(run_dir):
         'n_records': len(df), 'n_errors': int((df.error != '').sum()),
         'n_unjudged': int((~df.judged).sum()), 'n_common_emergency_records': int((df.triage_tier == 1).sum()),
         'n_affect_errors': manifest.get('n_affect_errors', 0),
+        'n_judge_incomplete': manifest.get('n_judge_incomplete', 0),
         'n_semantic_errors': manifest.get('n_semantic_errors', 0),
         'n_semantic_abstentions': manifest.get('n_semantic_abstentions', 0),
         'affect_mode': manifest.get('affect_mode', 'unspecified'),
@@ -73,7 +74,7 @@ def build_report(run_dir):
     }
     write_json(run_dir / 'research_report.json', report)
     lines = [f"# Research run {report['run_id']}", '', '**Exploratory; clinical validation not established.**', '',
-             f"Records: {len(df)}; errors: {report['n_errors']}; unjudged: {report['n_unjudged']}.", '',
+             f"Records: {len(df)}; errors: {report['n_errors']}; unjudged: {report['n_unjudged']}; incomplete rubrics: {report['n_judge_incomplete']}.", '',
              'Paired case-level differences (A − B; no confirmatory significance claim):', '']
     for name, result in contrasts.items():
         r = json_safe(result)

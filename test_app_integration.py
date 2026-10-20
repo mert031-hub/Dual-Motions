@@ -46,6 +46,20 @@ def test_review_app_does_not_expose_system_mapping(monkeypatch):
     assert not app.chat_input and not app.selectbox
 
 
+def test_benchmark_ui_discloses_incomplete_rubric(backend, monkeypatch, tmp_path):
+    import batch_tester
+    from cases import STARTER_CASES
+    monkeypatch.setenv('APP_REQUIRE_AUTH', '0')
+    monkeypatch.delenv('APP_PASSWORD_HASH', raising=False)
+    sample = [next(c for c in STARTER_CASES if c['id'] == 'S07')]
+    result = batch_tester.run_batch_benchmark(cases=sample, systems=['study_policy'], out_root=str(tmp_path))
+    app = AppTest.from_file(str(ROOT/'app.py')).run()
+    app.session_state['benchmark'] = result
+    app = app.run()
+    assert not app.exception
+    assert any('yargıç rubriği eksik' in w.value for w in app.warning)
+
+
 def test_password_hash_verifies_correct_password_and_fails_on_bad_configuration():
     encoded = hash_password('test-fixture-only')
     assert verify_password('test-fixture-only', encoded)

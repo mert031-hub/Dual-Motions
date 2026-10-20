@@ -114,6 +114,8 @@ dosyası koordinatörde kalır. Bu yanıt puanları, vaka kırmızı bayrak etik
 Puanlanmamış alanlar sıfır veya olumlu puanla doldurulmaz. Sabit kategori durumunda
 kappa tanımsızdır; mükemmel klinik uyum diye sunulmaz.
 Ölçek dışındaki model puanları 1–5 aralığına kırpılarak kabul edilmez; şema doğrulaması başarısız olur.
+Yargıç bütün rubrik alanlarını döndürmelidir. Gerçekten puanlanamayan alan açık `null`
+olabilir; bu kayıtlar `n_judge_incomplete` ile sayılır ve benchmark eksiksiz başarılı sayılmaz.
 
 ## Dağıtım
 

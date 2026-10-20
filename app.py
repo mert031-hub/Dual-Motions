@@ -352,6 +352,9 @@ with tab_benchmark:
         n_err = bm["manifest"].get("n_response_errors", 0)
         if n_err:
             st.error(f"{n_err} yanıt hata ile sonuçlandı; bu yanıtlar puanlanmadı ve özetlerde 'n_hata' olarak sayıldı.")
+        n_incomplete = bm['manifest'].get('n_judge_incomplete', 0)
+        if n_incomplete:
+            st.warning(f'{n_incomplete} yanıtta yargıç rubriği eksik: puanlanamayan alanlar doldurulmadı; deney eksiksiz başarılı sayılamaz.')
 
         st.markdown("##### Trijaj katmanı metrikleri")
         st.dataframe(bm["triage_table"], hide_index=True)

@@ -224,6 +224,7 @@ def run_batch_benchmark(
         df[col] = False
     df["judge_error"] = ""
     df["judge_rationale"] = ""
+    df['judge_unscored_fields'] = pd.Series([[] for _ in range(len(df))], dtype='object')
     for flag in judge.BEHAVIOR_FLAGS:
         df[flag] = pd.Series([None] * len(df), dtype='object')
 
@@ -247,6 +248,7 @@ def run_batch_benchmark(
                     df.at[i, "judged"] = True
                     df.at[i, "judge_rationale"] = value["rationale"][:1500]
                     df.at[i, "judge_error"] = "; ".join(value["judge_errors"])
+                    df.at[i, 'judge_unscored_fields'] = value['unscored_fields']
                     fh.write(json.dumps(minimize({"case_id": df.at[i, "case_id"], "system": df.at[i, "system"],
                                          "repeat": int(df.at[i, "repeat"]), **value}, persist_text), ensure_ascii=False, default=str) + "\n")
                 else:
@@ -326,6 +328,7 @@ def run_batch_benchmark(
     manifest["n_response_errors"] = int((df["error"] != "").sum())
     manifest['n_judged'] = int(df['judged'].sum())
     manifest['n_judge_errors'] = int((df['judge_error'] != '').sum())
+    manifest['n_judge_incomplete'] = int((df.judged & df.judge_unscored_fields.map(bool)).sum())
     manifest['n_affect_errors'] = int(df.affect_error.sum())
     manifest['n_semantic_errors'] = int(df.semantic_error.sum())
     manifest['n_semantic_abstentions'] = int(df.semantic_abstained.sum())
@@ -363,7 +366,9 @@ if __name__ == "__main__":  # python batch_tester.py  -> komut satırından çal
         progress=lambda stage, d, t: print(f"[{stage}] {d}/{t}", end="\r"),
     )
     print("\nKayıt klasörü:", out["run_dir"])
+    print('Kontrol sayımları:', {key: out['manifest'][key] for key in
+                                ('n_response_errors', 'n_judge_errors', 'n_judge_incomplete', 'n_affect_errors', 'n_semantic_errors')})
     print(out["triage_table"].to_string(index=False))
     if not out["summary_table"].empty:
         print(out["summary_table"].to_string(index=False))
-    raise SystemExit(1 if any(out['manifest'][key] for key in ('n_response_errors', 'n_judge_errors', 'n_affect_errors', 'n_semantic_errors')) else 0)
+    raise SystemExit(1 if any(out['manifest'][key] for key in ('n_response_errors', 'n_judge_errors', 'n_judge_incomplete', 'n_affect_errors', 'n_semantic_errors')) else 0)

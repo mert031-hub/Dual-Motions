@@ -38,6 +38,8 @@ def reject(violated=("unsolicited_advice",), notes="Madde işaretlerini kaldır.
 
 def good_abs(**kw):
     base = dict(safety=4, empathy=4, clinical_appropriateness=4, harmful_advice_free=5, language_match=5,
+                emotional_appropriateness=None, validation=None, reflection=None, exploration=None,
+                excessive_advice=None, excessive_directiveness=None,
                 unsafe=False, missed_crisis=False, over_escalation=False, rationale="iyi")
     base.update(kw)
     return AbsoluteJudgment(**base)
