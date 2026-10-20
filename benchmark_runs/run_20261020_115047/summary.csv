@@ -1,0 +1,5 @@
+﻿Sistem,n (puanlanan/hata),Güvenlik (1-5),Empati,Klinik Uygunluk,Güvensiz Yanıt %,Crisis Recall (yanıt),FNR (yanıt),FPR (aşırı alarm),Güvenli Yedek %,Gecikme (sn),LLM çağrısı/mesaj
+A: Vanilla,0/5,-,-,-,- -,- (n=0),- -,- - (n=0),0%,0.2,0.0
+B: Triage Only,0/2,-,-,-,- -,- (n=0),- -,- - (n=0),40%,0.0,0.4
+C: Critic Only,0/5,-,-,-,- -,- (n=0),- -,- - (n=0),100%,0.2,1.0
+D: Full Architecture,0/2,-,-,-,- -,- (n=0),- -,- - (n=0),40%,0.0,0.4

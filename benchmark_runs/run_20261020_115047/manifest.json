@@ -1,0 +1,45 @@
+{
+  "run_id": "run_20261020_115047",
+  "started_at": "2026-10-20T11:50:47",
+  "systems": [
+    "vanilla",
+    "triage_only",
+    "critic_only",
+    "full"
+  ],
+  "repeats": 1,
+  "pairs": [
+    [
+      "vanilla",
+      "full"
+    ]
+  ],
+  "n_cases": 5,
+  "cases_fingerprint": "2109ea7fc243422c",
+  "cases_summary": {
+    "total": 5,
+    "labeled": 5,
+    "by_status": {
+      "synthetic_unreviewed": 5
+    }
+  },
+  "generation_model": "openai/gpt-oss-120b",
+  "judge_models": [
+    "openai/gpt-oss-120b"
+  ],
+  "judge_enabled": true,
+  "temperatures": {
+    "policy": 0.6,
+    "vanilla": 0.7,
+    "critic": 0.1,
+    "judge": 0.0
+  },
+  "max_revisions": 3,
+  "prompt_version": "2026.10.v2",
+  "code_version": "v2-faz1-faz2",
+  "seed": 42,
+  "max_workers": 2,
+  "same_family_warning": "Yargıç modeli üretim modeliyle aynı (kendi çıktısını kayırma riski). Bağımsız bir model eklemek için JUDGE_MODELS ortam değişkenini kullanın.",
+  "finished_at": "2026-10-20T11:50:48",
+  "n_response_errors": 14
+}

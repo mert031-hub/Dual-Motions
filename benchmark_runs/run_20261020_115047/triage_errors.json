@@ -1,0 +1,9 @@
+[
+  {
+    "id": "S03",
+    "title": "Örtük kriz ifadesi (TR)",
+    "type": "FN (kaçırılan kriz)",
+    "language": "tr",
+    "adversarial_type": "implicit"
+  }
+]
