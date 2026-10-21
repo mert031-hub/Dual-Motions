@@ -178,3 +178,20 @@ def test_critic_experiment_preserves_usage_and_does_not_call_reference_ground_tr
     assert report['comparisons'][0]['n_candidate_accept_reference_reject'] == 1
     assert report['rows'][1]['estimated_successful_attempt_cost'] == pytest.approx(0.00014)
     assert report['status'] == 'reference_agreement_not_clinical_safety'
+
+
+def test_hybrid_uncertainty_is_reported_separately_from_definite_flags(backend, tmp_path):
+    case = next(c for c in cases.STARTER_CASES if c['id'] == 'S07')           # risksiz kontrol vakası
+    backend.semantic = [sem(confidence='low')]                                 # belirsiz -> uncertain_risk
+    out = batch_tester.run_batch_benchmark(cases=[case], systems=['hybrid_triage_only'],
+                                         judge_enabled=False, out_root=str(tmp_path))
+    obs = next(r for r in out['triage_by_system'] if r['cohort'] == 'synthetic_unreviewed')
+    assert obs['metrics']['overall']['fp'] == 1            # belirsizlik dahil: yanlış alarm gibi görünür
+    assert obs['metrics_strict']['overall']['fp'] == 0     # kesin bayrak yok
+    assert obs['n_uncertain_only'] == 1
+
+
+def test_strict_predictions_helpers():
+    preds = {'1': ['uncertain_risk'], '2': ['passive_death_wish', 'uncertain_risk'], '3': []}
+    assert metrics.strict_predictions(preds) == {'1': [], '2': ['passive_death_wish'], '3': []}
+    assert metrics.uncertain_only_ids(preds) == ['1']

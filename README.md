@@ -86,6 +86,9 @@ bilinçli düzeltmede `--allow-message-change` açıkça seçilebilir.
 - `full_hybrid` ve `hybrid_triage_only`: kurallara ek semantik triyaj. Kuralların
   acil sonucu API beklemez; semantik katman kuralları düşürmez. Geçmiş/varsayımsal
   veya belirsiz sonuçlar güncel kriz kesinliği sayılmaz; kontrol sorusuna yönlendirilir.
+  `triage_by_system.json` her sistem için iki görünüm içerir: `metrics` (belirsizlik bayrağı
+  `uncertain_risk` da pozitif sayılır) ve `metrics_strict` (yalnızca kesin risk bayrakları);
+  `n_uncertain_only` yalnızca belirsizlik bayrağı alan vakaları sayar. H2'de ikisi birlikte okunmalıdır.
 - Yapılandırılmış bellek varsayılan kapalıdır; etkinleştirilirse ek model çağrısı yapar.
   Yalnızca alıntıyla desteklenen hasta beyanları oturumda tutulur; risk kayıtları zaman
   geçti veya sonraki mesaj sakin diye kendiliğinden silinmez.

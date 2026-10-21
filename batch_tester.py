@@ -180,7 +180,7 @@ def run_batch_benchmark(
         "python_version": sys.version.split()[0],
         "dependencies": {name: importlib.metadata.version(name) for name in ('streamlit', 'langgraph', 'langchain-groq', 'pydantic', 'pandas', 'numpy')},
         "source_sha256": source_hash.hexdigest(), "persist_text": persist_text,
-        "triage_metrics_scope": "rule_reference; per-system observations are in triage_by_system.json",
+        "triage_metrics_scope": "rule_reference; per-system observations are in triage_by_system.json (metrics = uncertain flag counted positive; metrics_strict = definite flags only)",
         "clinical_validation": "not_established",
         "llm_calls_scope": "logical component calls, not provider retries or token usage",
         "temperatures": {"policy": config.POLICY_TEMPERATURE, "vanilla": config.VANILLA_TEMPERATURE,
@@ -311,7 +311,12 @@ def run_batch_benchmark(
                              'n_errors': int((cohort_rows.error != '').sum()),
                              'n_semantic_abstentions': int(cohort_rows.semantic_abstained.sum()),
                              'n_semantic_unavailable': int(cohort_rows.semantic_error.sum()),
-                             'metrics': metrics.triage_metrics(subset, predictions=predictions)})
+                             # 'metrics': belirsizlik (uncertain_risk) DAHİL, herhangi bir bayrak = pozitif.
+                             # 'metrics_strict': yalnızca kesin risk bayrakları; H2 için ikisi birlikte okunmalı.
+                             'metrics': metrics.triage_metrics(subset, predictions=predictions),
+                             'metrics_strict': metrics.triage_metrics(subset, predictions=metrics.strict_predictions(predictions)),
+                             'n_uncertain_only': len([i for i in metrics.uncertain_only_ids(predictions)
+                                                      if i in {str(c['id']) for c in subset}])})
     write_json(Path(run_dir) / 'triage_by_system.json', minimize(observed, persist_text))
 
     # ---------- 5) Kayıt ----------

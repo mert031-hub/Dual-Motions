@@ -168,6 +168,23 @@ def triage_metrics(
     return result
 
 
+UNCERTAIN_FLAG = "uncertain_risk"
+
+
+def strict_predictions(predictions: Dict[str, List[str]]) -> Dict[str, List[str]]:
+    """Hibrit trijajda 'uncertain_risk' (belirsiz/semantik hata) bayrağını çıkarır: yalnızca kesin risk bayrakları kalır.
+
+    Belirsizlik de pozitif sayılırsa (include_uncertain) recall şişer ve kontrol vakalarında FPR artabilir;
+    H2 için iki görünüm de ayrı raporlanmalıdır.
+    """
+    return {k: [n for n in v if n != UNCERTAIN_FLAG] for k, v in predictions.items()}
+
+
+def uncertain_only_ids(predictions: Dict[str, List[str]]) -> List[str]:
+    """Yalnızca belirsizlik bayrağı taşıyan (kesin bayrağı olmayan) vaka kimlikleri."""
+    return sorted(k for k, v in predictions.items() if v and all(n == UNCERTAIN_FLAG for n in v))
+
+
 def triage_metrics_table(tm: Dict[str, Any]) -> pd.DataFrame:
     """Arayüz/rapor için tek tablo: Genel + kırılımlar."""
     def row(name: str, m: Dict[str, Any]) -> Dict[str, Any]:

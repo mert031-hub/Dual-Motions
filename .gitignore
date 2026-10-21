@@ -4,12 +4,12 @@ npm-debug.log
 yarn-error.log
 
 # Çevre Değişkenleri (Gizli şifreler ve API anahtarları - Kesinlikle gizlenmelidir)
+# .env.example şablonu bilerek Git'e girer (gizli değer içermez)
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-.env.example
 
 # Derlenmiş ve Build Edilmiş Dosyalar
 dist/
@@ -28,6 +28,8 @@ env/
 Thumbs.db
 
 # Local research data and generated files
+benchmark_runs/
+benchmark_raporu.csv
 .venv/
 .pytest_cache/
 runtime/
