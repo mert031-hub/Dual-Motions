@@ -83,13 +83,13 @@ def test_critic_prompt_contains_patient_message_history_and_directives(backend):
     assert PASSIVE in prompt                            # hasta mesajı
     assert "Patient: Merhaba" in prompt                 # geçmiş
     assert "passive_death_wish" in prompt               # trijaj bayrağı
-    assert "exactly ONE direct" in prompt               # zorunlu yönerge
+    assert "a direct, non-judgmental question" in prompt  # safety question remains mandatory
     assert "Nasıl hissettiğinizi duyuyorum" in prompt   # taslak
 
 
 def test_guided_directive_reaches_policy_prompt(backend):
     run_pipeline(PASSIVE, mode="full")
-    assert "exactly ONE direct" in backend.prompts("policy")[0]
+    assert "a direct, non-judgmental question" in backend.prompts("policy")[0]
 
 
 def test_contradictory_critic_output_is_rejected(backend):

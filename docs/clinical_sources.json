@@ -1,0 +1,232 @@
+{
+  "review_date": "2026-10-26",
+  "unique_sources": 14,
+  "unique_pdf_pages": 609,
+  "scope": "Supplied PDFs only; linked underlying evidence reviews and cited primary studies were not independently read. Page ranges describe text review, not verification of every image or every cited claim.",
+  "sources": [
+    {
+      "id": "alcohol",
+      "filename": "alcoholuse-disorders-diagnosis-assessment-and-management-of-harmful-drinking-highrisk-drinking-and-alcohol-dependence-pdf-35109391116229.pdf",
+      "sha256": "e3cea8874816beca6026a8534e8c67f00adb4659c254eaf0b8242a37f5c477cb",
+      "pages": 40,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          40
+        ]
+      ],
+      "method": "page-wise extracted text, including tables, references and appendices; duplicate verified by SHA256"
+    },
+    {
+      "id": "bipolar",
+      "filename": "bipolar-disorder-assessment-and-management-pdf-35109814379461.pdf",
+      "sha256": "4c0b06996359c602e5ba1f91a2d44f0813d09cb9740a86652be1293fe8e3140c",
+      "pages": 48,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          48
+        ]
+      ],
+      "method": "page-wise extracted text, including tables, references and appendices; duplicate verified by SHA256"
+    },
+    {
+      "id": "adhd",
+      "filename": "attention-deficit-hyperactivity-disorder-diagnosis-and-management-pdf-1837699732933.pdf",
+      "sha256": "3447a94328ac01c1425d369898585fd9074c89601c66cc00981ca42af9ca4023",
+      "pages": 61,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          61
+        ]
+      ],
+      "method": "page-wise extracted text, including tables, references and appendices; duplicate verified by SHA256"
+    },
+    {
+      "id": "selfharm_bulletin_tr",
+      "filename": "30092501_kendinezararvermebulteni.pdf",
+      "sha256": "f4972b101321ccefd39614eb3d194d170336035d22dab06020b19e98b93bd1df",
+      "pages": 12,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          12
+        ]
+      ],
+      "method": "page-wise extracted text, including tables, references and appendices; duplicate verified by SHA256"
+    },
+    {
+      "id": "gad_panic",
+      "filename": "generalised-anxiety-disorder-and-panic-disorder-in-adults-management-pdf-35109387756997.pdf",
+      "sha256": "cc6983e2bf3fd1bed80c51350d3c7d6647218c77458f78ee6f12bd82e28cc27c",
+      "pages": 42,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          42
+        ]
+      ],
+      "method": "page-wise extracted text, including tables, references and appendices; duplicate verified by SHA256"
+    },
+    {
+      "id": "depression",
+      "filename": "depression-in-adults-treatment-and-management-pdf-66143832307909.pdf",
+      "sha256": "4f59bf752b49734b81244d1251d94a8fc2e984aac34577e295be243582a957de",
+      "pages": 111,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          111
+        ]
+      ],
+      "method": "page-wise extracted text, including tables, references and appendices; duplicate verified by SHA256"
+    },
+    {
+      "id": "eating",
+      "filename": "eating-disorders-recognition-and-treatment-pdf-1837582159813.pdf",
+      "sha256": "554b92fed663da3b7f02d8ef9b5e253857df5cc0b5d0eceb2f31a967bc8a076e",
+      "pages": 45,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          45
+        ]
+      ],
+      "method": "page-wise extracted text, including tables, references and appendices; duplicate verified by SHA256"
+    },
+    {
+      "id": "selfharm_tr",
+      "filename": "kendinezararverme2.pdf",
+      "sha256": "74666a2a512c4421dbb7c209af9a434d714cc1a15effa3e003132f78f911f6e4",
+      "pages": 11,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          11
+        ]
+      ],
+      "method": "page-wise extracted text, including tables, references and appendices; duplicate verified by SHA256"
+    },
+    {
+      "id": "ocd_copy",
+      "filename": "obsessivecompulsive-disorder-and-body-dysmorphic-disorder-treatment-pdf-975381519301 (1).pdf",
+      "sha256": "488b3742e828819ef258e457f434d24ac4deae5bab113a033a931dc65b423356",
+      "pages": 43,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          43
+        ]
+      ],
+      "method": "page-wise extracted text, including tables, references and appendices; duplicate verified by SHA256"
+    },
+    {
+      "id": "ocd_tr",
+      "filename": "OKB.pdf",
+      "sha256": "9f7572a0484e0f5428fbe8416573504fbb3c1e65a179cf31bd5804e0e40a02b5",
+      "pages": 10,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          10
+        ]
+      ],
+      "method": "Turkish+English OCR; key definition visually checked; numeric OCR not used"
+    },
+    {
+      "id": "ocd",
+      "filename": "obsessivecompulsive-disorder-and-body-dysmorphic-disorder-treatment-pdf-975381519301.pdf",
+      "sha256": "488b3742e828819ef258e457f434d24ac4deae5bab113a033a931dc65b423356",
+      "pages": 43,
+      "duplicate_of": "ocd_copy",
+      "reviewed_pdf_pages": [
+        [
+          1,
+          43
+        ]
+      ],
+      "method": "byte-identical duplicate; content reviewed under ocd_copy"
+    },
+    {
+      "id": "ocd_treatment_tr",
+      "filename": "OKB Tedavisinde güncel tedavi yaklasimlari.pdf",
+      "sha256": "dff6af793356d5dcf6559edcf1b908c24204b04d0b1bc86ef935b68545354808",
+      "pages": 22,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          22
+        ]
+      ],
+      "method": "page-wise extracted text, including tables, references and appendices; duplicate verified by SHA256"
+    },
+    {
+      "id": "social_copy",
+      "filename": "social-anxiety-disorder-recognition-assessment-and-treatment-pdf-35109639699397 (1).pdf",
+      "sha256": "76829549a666c14532c738343a5d22e4d620c9c75ad11d12e9f4a2e366de5cba",
+      "pages": 35,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          35
+        ]
+      ],
+      "method": "page-wise extracted text, including tables, references and appendices; duplicate verified by SHA256"
+    },
+    {
+      "id": "selfharm",
+      "filename": "selfharm-assessment-management-and-preventing-recurrence-pdf-66143837346757.pdf",
+      "sha256": "2a9255539f6da3336e5740e900342c5e2146dc561bffe0fbb370a73fe12b86d8",
+      "pages": 76,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          76
+        ]
+      ],
+      "method": "page-wise extracted text, including tables, references and appendices; duplicate verified by SHA256"
+    },
+    {
+      "id": "ptsd",
+      "filename": "posttraumatic-stress-disorder-pdf-66141601777861.pdf",
+      "sha256": "7f7bb38f45254c08bd0082b24753e65a65b5eab82ba26f1cff53513282c479bc",
+      "pages": 53,
+      "duplicate_of": null,
+      "reviewed_pdf_pages": [
+        [
+          1,
+          53
+        ]
+      ],
+      "method": "page-wise extracted text, including tables, references and appendices; duplicate verified by SHA256"
+    },
+    {
+      "id": "social",
+      "filename": "social-anxiety-disorder-recognition-assessment-and-treatment-pdf-35109639699397.pdf",
+      "sha256": "76829549a666c14532c738343a5d22e4d620c9c75ad11d12e9f4a2e366de5cba",
+      "pages": 35,
+      "duplicate_of": "social_copy",
+      "reviewed_pdf_pages": [
+        [
+          1,
+          35
+        ]
+      ],
+      "method": "byte-identical duplicate; content reviewed under social_copy"
+    }
+  ]
+}

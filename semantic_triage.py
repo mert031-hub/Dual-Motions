@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 import config
 import llm_factory
+from clinical_constraints import guidance_block
 from red_flags import RED_FLAG_RULES, _fold, detect_red_flags
 
 
@@ -38,7 +39,7 @@ def classify(message: str) -> SemanticTriageResult:
         'Return only categories supported by exact short quotations in evidence. '
         'If uncertain, abstain; confidence is a self-report, not a calibrated probability. '
         'Do not infer an absence of risk from an earlier improvement or from silence. '
-        'Categories: ' + json.dumps({k: v['description'] for k, v in RED_FLAG_RULES.items()}, ensure_ascii=False)
+        + guidance_block() + '\nCategories: ' + json.dumps({k: v['description'] for k, v in RED_FLAG_RULES.items()}, ensure_ascii=False)
     )
     raw = llm_factory.call_with_retry(lambda: schema.invoke([
         SystemMessage(content=prompt), HumanMessage(content=json.dumps({'message': message}, ensure_ascii=False))

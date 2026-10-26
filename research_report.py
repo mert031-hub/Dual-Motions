@@ -51,7 +51,10 @@ def build_report(run_dir):
                                    'n_cases_with_score': len(per_case),
                                    'emotional_appropriateness_mean': float(per_case.mean()) if len(per_case) else None})
     report = {
-        'run_id': manifest['run_id'], 'status': 'exploratory_not_clinically_validated',
+        'run_id': manifest['run_id'],
+        'execution_mode': manifest.get('execution_mode', 'unspecified'),
+        'status': ('offline_infrastructure_only' if manifest.get('execution_mode') == 'offline_stub'
+                   else 'exploratory_not_clinically_validated'),
         'n_records': len(df), 'n_errors': int((df.error != '').sum()),
         'n_unjudged': int((~df.judged).sum()), 'n_common_emergency_records': int((df.triage_tier == 1).sum()),
         'n_affect_errors': manifest.get('n_affect_errors', 0),
@@ -73,7 +76,9 @@ def build_report(run_dir):
         ],
     }
     write_json(run_dir / 'research_report.json', report)
-    lines = [f"# Research run {report['run_id']}", '', '**Exploratory; clinical validation not established.**', '',
+    lines = [f"# Research run {report['run_id']}", '', ('**OFFLINE STUB: infrastructure only; no model quality evaluation.**'
+              if report['execution_mode'] == 'offline_stub'
+              else '**Exploratory; clinical validation not established.**'), '',
              f"Records: {len(df)}; errors: {report['n_errors']}; unjudged: {report['n_unjudged']}; incomplete rubrics: {report['n_judge_incomplete']}.", '',
              'Paired case-level differences (A − B; no confirmatory significance claim):', '']
     for name, result in contrasts.items():

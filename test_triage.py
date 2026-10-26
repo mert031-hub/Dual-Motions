@@ -44,7 +44,7 @@ def test_passive_death_is_guided_not_canned():
     assert r["tier"] == 2
     assert r["canned_keys"] == []
     assert r["directive_keys"] == ["ask_safety_question"]
-    assert "ONE direct" in r["directives"][0]
+    assert "a direct, non-judgmental question" in r["directives"][0]
 
 
 def test_medication_flag_is_guided_with_no_stop_medication_rule():

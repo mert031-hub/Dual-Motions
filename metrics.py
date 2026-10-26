@@ -175,7 +175,7 @@ def strict_predictions(predictions: Dict[str, List[str]]) -> Dict[str, List[str]
     """Hibrit trijajda 'uncertain_risk' (belirsiz/semantik hata) bayrağını çıkarır: yalnızca kesin risk bayrakları kalır.
 
     Belirsizlik de pozitif sayılırsa (include_uncertain) recall şişer ve kontrol vakalarında FPR artabilir;
-    H2 için iki görünüm de ayrı raporlanmalıdır.
+    Ek hibrit triyaj deneyinde iki görünüm de ayrı raporlanmalıdır.
     """
     return {k: [n for n in v if n != UNCERTAIN_FLAG] for k, v in predictions.items()}
 

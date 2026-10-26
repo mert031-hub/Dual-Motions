@@ -88,7 +88,7 @@ bilinçli düzeltmede `--allow-message-change` açıkça seçilebilir.
   veya belirsiz sonuçlar güncel kriz kesinliği sayılmaz; kontrol sorusuna yönlendirilir.
   `triage_by_system.json` her sistem için iki görünüm içerir: `metrics` (belirsizlik bayrağı
   `uncertain_risk` da pozitif sayılır) ve `metrics_strict` (yalnızca kesin risk bayrakları);
-  `n_uncertain_only` yalnızca belirsizlik bayrağı alan vakaları sayar. H2'de ikisi birlikte okunmalıdır.
+  `n_uncertain_only` yalnızca belirsizlik bayrağı alan vakaları sayar. Ek hibrit triyaj deneyinde iki görünüm birlikte okunmalıdır; Recall/FNR/FPR ve belirsizlik sayısı birlikte değerlendirilir.
 - Yapılandırılmış bellek varsayılan kapalıdır; etkinleştirilirse ek model çağrısı yapar.
   Yalnızca alıntıyla desteklenen hasta beyanları oturumda tutulur; risk kayıtları zaman
   geçti veya sonraki mesaj sakin diye kendiliğinden silinmez.
@@ -150,3 +150,11 @@ Yeni gelen vaka dosyalarını uygulamanın uzman veri havuzuna katmadan hazırla
 mevcut deterministik triyaj davranışını kaydetmek için
 [geliştirme havuzu yönergesini](docs/DEVELOPMENT_POOL.md) kullanın.
 Kaynak renkleri uzman etiketi sayılmaz; bu yol klinik başarı metriği hesaplamaz.
+
+İfade varyantlarını ana kuralları değiştirmeden incelemek ve dört kollu pilotu
+planlamak/çevrimdışı denemek için [sonraki geliştirme adımlarına](docs/NEXT_DEVELOPMENT_STEPS.md)
+bakın. Araştırmaya katkı için [klinisyen soru formu](docs/CLINICIAN_QUESTIONS.md) hazırdır.
+
+Yüklenen 16 klinik PDF'nin belge bazında incelemesi, öneri/sayfa → kod eşlemesi ve kalan doğrulama gereksinimleri: [Klinik kanıt incelemesi](docs/CLINICAL_EVIDENCE_REVIEW.md). Ortak yanıt sınırları kılavuzlardan yararlanır; anahtar sözcük trijajı, LLM kararları ve H1/H2 rubriği klinik olarak doğrulanmış değildir.
+
+Kaynak incelemesinden sonraki bağlam şeması, bağımsız etiketleme, Critic sınaması ve kör A/B/C/D değerlendirmesi için [doğrulama yol haritası taslağı](docs/VALIDATION_ROADMAP.md).

@@ -147,7 +147,7 @@ def get_message(key: str, lang: str = "en") -> str:
 DIRECTIVES: Dict[str, str] = {
     "ask_safety_question": (
         "The patient may be expressing passive thoughts of death or hopelessness. Reflect their feelings briefly "
-        "and warmly, then ask exactly ONE direct, non-judgmental question about whether they are having thoughts "
+        "and warmly, then ask a direct, non-judgmental question about whether they are having thoughts "
         "of ending their life or hurting themselves. Do not minimize, do not give advice lists, do not diagnose."
     ),
     "medical_differential": (
@@ -164,8 +164,8 @@ DIRECTIVES: Dict[str, str] = {
     "uncertain_check_in": (
         "The message may contain a risk signal that is ambiguous, refers to the past, is hypothetical, concerns "
         "another person, or could not be assessed reliably. Respond warmly to what the patient said, do not assume "
-        "the worst and do not dismiss it, and ask exactly ONE open, non-leading question about how they are doing "
-        "right now (for example whether they are having thoughts of harming themselves). Do not diagnose."
+        "the worst and do not dismiss it, and ask a brief, non-leading question relevant to their current safety or needs "
+        "right now. For unwanted intrusive thoughts, distinguish intent from feared content without declaring safety or diagnosing OCD. Do not assume third-party events happened to the speaker. Do not diagnose."
     ),
 }
 

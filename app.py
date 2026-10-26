@@ -167,8 +167,9 @@ with tab_chat:
             m1, m2, m3, m4 = st.columns(4)
             m1.metric("Duygu", r["emotion"] or "-")
             m2.metric("Trijaj", r["triage_decision"])
-            m3.metric("Critic Riski", r["critic_risk_level"])
+            m3.metric("Critic inceleme sinyali", r["critic_risk_level"])
             m4.metric("Revizyon", r["revision_count"])
+            st.caption("Bu sinyaller doğrulanmamış yazılım çıktılarıdır; klinik risk sınıflaması veya intihar öngörüsü değildir. Bayrak bulunmaması güvenli olduğu anlamına gelmez.")
 
             if r["needs_human_review"]:
                 st.error("👤 Bu vaka **insan incelemesi** gerektiriyor (acil trijaj, güvenli yedek veya hata).")

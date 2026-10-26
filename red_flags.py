@@ -1,4 +1,9 @@
-"""Egitim amacli klinik depresyon kirmizi bayrak kurallari."""
+"""Unvalidated keyword routing rules for a research prototype.
+
+These are not guideline-derived diagnostic criteria or suicide prediction rules.
+Past/negated/quoted phrases can still match; absence of a match does not establish
+safety. See docs/CLINICAL_EVIDENCE_REVIEW.md before interpreting their outputs.
+"""
 import unicodedata
 from typing import Dict, List
 

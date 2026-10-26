@@ -26,6 +26,7 @@ import pandas as pd
 
 import config
 import judge
+from clinical_constraints import evidence_metadata
 import metrics
 from cases import cases_fingerprint, describe_cases, load_cases
 from workflow import run_pipeline
@@ -128,12 +129,17 @@ def run_batch_benchmark(
     progress: ProgressCb = None,
     persist_text: bool = False,
     affect_mode: str = 'manual',
+    execution_mode: str = 'live',
 ) -> Dict[str, Any]:
     """Ablation deneyini çalıştırır ve sonuçları döndürür/kaydeder.
 
     pairs: kör A/B için (sistem_x, sistem_y) çiftleri. Varsayılan: [("vanilla", "full")] (ikisi de seçiliyse).
     judge_enabled=False => yalnızca üretim + trijaj metrikleri (ucuz ön deneme).
     """
+    if execution_mode not in ('live', 'offline_stub'):
+        raise ValueError('Unknown execution mode')
+    if execution_mode == 'offline_stub' and judge_enabled:
+        raise ValueError('Offline stubs cannot produce judge scores')
     if not systems or (cases is not None and not cases) or repeats < 1 or max_workers < 1:
         raise ValueError("Vaka/sistem listesi boş olamaz; tekrar ve workers pozitif olmalı")
     if len(set(systems)) != len(systems):
@@ -167,6 +173,7 @@ def run_batch_benchmark(
         source_hash.update(path.read_bytes())
 
     manifest = {
+        "clinical_evidence": evidence_metadata(),
         "run_id": run_id, "started_at": datetime.now().isoformat(timespec="seconds"),
         "systems": list(systems), "repeats": repeats, "pairs": [list(p) for p in pairs],
         "n_cases": len(cases), "cases_fingerprint": cases_fingerprint(cases), "cases_summary": describe_cases(cases),
@@ -182,6 +189,7 @@ def run_batch_benchmark(
         "source_sha256": source_hash.hexdigest(), "persist_text": persist_text,
         "triage_metrics_scope": "rule_reference; per-system observations are in triage_by_system.json (metrics = uncertain flag counted positive; metrics_strict = definite flags only)",
         "clinical_validation": "not_established",
+        "execution_mode": execution_mode,
         "llm_calls_scope": "logical component calls, not provider retries or token usage",
         "temperatures": {"policy": config.POLICY_TEMPERATURE, "vanilla": config.VANILLA_TEMPERATURE,
                          "critic": config.CRITIC_TEMPERATURE, "judge": config.JUDGE_TEMPERATURE},
@@ -312,7 +320,7 @@ def run_batch_benchmark(
                              'n_semantic_abstentions': int(cohort_rows.semantic_abstained.sum()),
                              'n_semantic_unavailable': int(cohort_rows.semantic_error.sum()),
                              # 'metrics': belirsizlik (uncertain_risk) DAHİL, herhangi bir bayrak = pozitif.
-                             # 'metrics_strict': yalnızca kesin risk bayrakları; H2 için ikisi birlikte okunmalı.
+                             # 'metrics_strict': kesin bayraklar; ek hibrit triyaj deneyinde iki görünüm birlikte okunmalı.
                              'metrics': metrics.triage_metrics(subset, predictions=predictions),
                              'metrics_strict': metrics.triage_metrics(subset, predictions=metrics.strict_predictions(predictions)),
                              'n_uncertain_only': len([i for i in metrics.uncertain_only_ids(predictions)

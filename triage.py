@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from messages import get_directive, get_message
 from red_flags import detect_red_flags
+from clinical_constraints import evidence_metadata
 
 # eylem -> {mode, priority, message_key | directive_key}
 ACTION_SCHEMA: Dict[str, Dict[str, Any]] = {
@@ -52,11 +53,11 @@ def run_triage(message: str, detector: Optional[Callable[[str], List[Dict[str, s
 
     Dönen sözlük:
       flags            : eşleşen tüm bayraklar, ciddiyete göre sıralı (en ciddi ilk)
-      tier             : 0 temiz, 1 acil/canned, 2 yönlendirmeli/guided
+      tier             : 0 kural eşleşmedi (güvenli olduğu anlamına gelmez), 1 canned, 2 guided
       canned_keys      : tier 1 için mesaj anahtarları (öncelik sırasıyla, tekrarsız)
       directive_keys   : tier 2 için yönerge anahtarları
       directives       : yönerge metinleri (Policy'ye ve Critic'e verilir)
-      risk_level       : kuralların en yüksek risk seviyesi ('none'/'low'/'medium'/'high')
+      risk_level       : eski şema için kural önceliği; klinik sınıflama veya gelecek risk öngörüsü değildir
     """
     raw = (detector or detect_red_flags)(message or "")
     enriched: List[Dict[str, Any]] = []
@@ -98,6 +99,7 @@ def run_triage(message: str, detector: Optional[Callable[[str], List[Dict[str, s
             risk = f["risk_level"]
 
     return {
+        "clinical_evidence": evidence_metadata(),
         "flags": enriched,
         "tier": tier,
         "canned_keys": canned_keys,
