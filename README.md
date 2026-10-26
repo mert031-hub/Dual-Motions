@@ -143,3 +143,10 @@ docker build --secret id=build_ca,src=/GUVENILIR/CA/PAKETI.pem -t dual-motions:r
 Çalışma zamanı dış API çağrıları için aynı güven yapılandırması gerekiyorsa CA'yı
 salt okunur bağlayıp `SSL_CERT_FILE` değerini konteyner içindeki yola ayarlayın.
 Bağımlılık yenileme: `uv pip compile --python-version 3.12 --generate-hashes requirements.txt -o requirements.lock`.
+
+## Etiket bekleyen verilerle geliştirme
+
+Yeni gelen vaka dosyalarını uygulamanın uzman veri havuzuna katmadan hazırlamak ve
+mevcut deterministik triyaj davranışını kaydetmek için
+[geliştirme havuzu yönergesini](docs/DEVELOPMENT_POOL.md) kullanın.
+Kaynak renkleri uzman etiketi sayılmaz; bu yol klinik başarı metriği hesaplamaz.
