@@ -57,3 +57,5 @@ Resmî kaynak sayfaları: [CG115](https://www.nice.org.uk/guidance/cg115), [CG18
 - 12 geliştirme örneği × 4 kol: **48/48 kayıt, 0 akış hatası**, `offline_stub`; model yanıtları ve onaylar sabit test girdileridir, klinik kalite puanı üretilmedi. Yerel çıktı: `runtime/study_pilots/run_20261026_182119_351911_e901cb81/pilot_checks.json`.
 - 155 kaydın gölge ifade incelemesi yeniden çalıştırıldı; klinik ölçütler `null`, üretim kuralları değişmedi. Yerel çıktı: `runtime/expression_reviews/expressions-34cwk6s6/review.json`.
 - Python derleme ve `git diff --check` kontrolleri geçti. Bu kontroller klinik geçerlilik, duyarlılık/özgüllük veya gerçek LLM yönerge uyumu kanıtı değildir.
+
+Sonraki revizyon notu: Deneysel semantik v2 kategoriye özel kanıt ve olay bağlamı kontrolü ekledi; ortak alıntının tek başına tüm kategorileri kabul ettirmesi teknik olarak engellendi. Bu, alıntının klinik yorumunu doğrulamaz. Ayrıntılar: [doğrulama çalışma paketi](VALIDATION_WORKBENCH.md).

@@ -4,7 +4,7 @@ import json
 import streamlit as st
 
 from app_auth import require_access
-from clinician_review import validate_rating
+from clinician_review import validate_rating, RUBRIC_ANCHORS
 import judge
 
 st.set_page_config(page_title='Kör klinisyen değerlendirmesi')
@@ -21,6 +21,8 @@ if uploaded:
         if len(ids) != len(set(ids)):
             raise ValueError('Tekrarlı item_id')
         reviewer = st.text_input('Değerlendirici kodu (ad/kişisel bilgi girmeyin)')
+        with st.expander('Puanlama çıpaları — taslak, klinik olarak doğrulanmış ölçek değildir'):
+            st.json(packet.get('rubric_anchors', RUBRIC_ANCHORS))
         if st.session_state.get('packet_id') != packet['packet_id']:
             st.session_state.packet_id = packet['packet_id']
             st.session_state.ratings = {}

@@ -16,8 +16,24 @@ from affect_policy import AffectEstimate
 
 
 def sem(categories=(), temporal="current", confidence="high", abstain=False, implicit=False, evidence=("kanıt",)):
+    # Explicit category-bound evidence for the v2 experimental semantic contract.
+    spans = [{'quote': q} for q in evidence]
+    events, bindings = [], []
+    for category in categories:
+        event = dict(subject='self', time={'unclear': 'unknown', 'third_party': 'current'}.get(temporal, temporal),
+                     evidence={'subject': spans})
+        if temporal == 'third_party':
+            event['subject'] = 'other'
+        if event['time'] != 'unknown':
+            event['evidence']['time'] = spans
+        if category in ('active_self_harm', 'violence_risk'):
+            event['intent'] = 'yes'
+            event['evidence']['intent'] = spans
+        bindings.append(dict(category=category, event_index=len(events), evidence=spans))
+        events.append(event)
     return SemanticTriageResult(risk_categories=list(categories), evidence=list(evidence), temporal_context=temporal,
                                 implicit=implicit, confidence=confidence, abstain=abstain,
+                                context={'events': events}, category_evidence=bindings,
                                 detected_language="Turkish", rationale="gerekçe")
 
 

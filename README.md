@@ -86,6 +86,8 @@ bilinçli düzeltmede `--allow-message-change` açıkça seçilebilir.
 - `full_hybrid` ve `hybrid_triage_only`: kurallara ek semantik triyaj. Kuralların
   acil sonucu API beklemez; semantik katman kuralları düşürmez. Geçmiş/varsayımsal
   veya belirsiz sonuçlar güncel kriz kesinliği sayılmaz; kontrol sorusuna yönlendirilir.
+  Semantik v2 her kategori için ayrı alıntı ve kişi/zaman olayı ister; genel alıntı listesi
+  tek başına kategori kabul ettirmez. Bu teknik kanıt kontrolü klinik yorumun doğruluğunu kanıtlamaz.
   `triage_by_system.json` her sistem için iki görünüm içerir: `metrics` (belirsizlik bayrağı
   `uncertain_risk` da pozitif sayılır) ve `metrics_strict` (yalnızca kesin risk bayrakları);
   `n_uncertain_only` yalnızca belirsizlik bayrağı alan vakaları sayar. Ek hibrit triyaj deneyinde iki görünüm birlikte okunmalıdır; Recall/FNR/FPR ve belirsizlik sayısı birlikte değerlendirilir.
@@ -158,3 +160,7 @@ bakın. Araştırmaya katkı için [klinisyen soru formu](docs/CLINICIAN_QUESTIO
 Yüklenen 16 klinik PDF'nin belge bazında incelemesi, öneri/sayfa → kod eşlemesi ve kalan doğrulama gereksinimleri: [Klinik kanıt incelemesi](docs/CLINICAL_EVIDENCE_REVIEW.md). Ortak yanıt sınırları kılavuzlardan yararlanır; anahtar sözcük trijajı, LLM kararları ve H1/H2 rubriği klinik olarak doğrulanmış değildir.
 
 Kaynak incelemesinden sonraki bağlam şeması, bağımsız etiketleme, Critic sınaması ve kör A/B/C/D değerlendirmesi için [doğrulama yol haritası taslağı](docs/VALIDATION_ROADMAP.md).
+
+Bağlam şeması, kategoriye özel kanıt kontrolü, sentetik inceleme paketi ve kör puanlama formları: [doğrulama çalışma paketi](docs/VALIDATION_WORKBENCH.md). `python validation_workbench.py build` API çağrısı yapmadan boş formları ve sentetik geliştirme örneklerini oluşturur.
+
+Son geliştirme turunun değişiklikleri, gözlenen kural açıkları ve doğrulama çıktıları: [revizyon raporu](docs/REVISION_REPORT_CONTEXT_VALIDATION.md).
