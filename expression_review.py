@@ -1,7 +1,7 @@
 """Offline shadow review of Turkish expression variants; never alters production triage.
 
 Candidates and context hints are engineering heuristics, not clinical labels.
-Existing emergency flags are retained, including those in historical/quoted text.
+This tool observes the current production router; it does not deploy its own candidates.
 """
 import argparse
 from collections import Counter
@@ -79,11 +79,11 @@ def review_pool(pool_path, out_root):
                'clinical_metrics': None, 'production_changed': False,
                'limitations': ['Shadow review only; no new actions or expert labels.',
                               'Context hints are incomplete; absence of a hint never proves current intent.',
-                              'Existing emergency behavior is preserved; known context errors are not fixed by this tool.']}
+                              'This shadow tool does not change decisions; baseline uses the current versioned router.']}
     write_json(out/'review.json', {'summary': summary, 'records': records})
     write_json(out/'manifest.json', {'pool_sha256': digest(raw),
                                     'code_sha256': {p: digest((Path(__file__).parent/p).read_bytes()) for p in
-                                                    ['expression_review.py', 'red_flags.py', 'triage.py', 'messages.py', 'clinical_constraints.py']},
+                                                    ['expression_review.py', 'red_flags.py', 'rule_context.py', 'triage.py', 'messages.py', 'clinical_constraints.py']},
                                     'model_calls': 0})
     return out
 

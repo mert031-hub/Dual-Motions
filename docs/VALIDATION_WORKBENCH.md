@@ -85,3 +85,7 @@ python critic_review.py frozen \
 Son komut belirli tek değerlendiricinin kararlarını aktarır; uzlaşı veya uzman yetkinliği varsaymaz. Referans insan yorumunun uygunluğu ayrıca incelenmelidir. `critic_experiment.py` bu formatı kullanabilir; gerçek model deneyinde sağlayıcı/veri/bütçe koşulları ayrıca gerekir. Boş formlar bu komutla etiketli deneye dönüştürülemez.
 
 Gerçek A/B/C/D yanıt paketlerinin mevcut `clinician_review.export_packet` yolu korunmuştur; çıpalar/sürüm eklenmiştir. Sabit `offline_stub` çıktılarının gerçek model yanıtı gibi dışa aktarılması artık reddedilir. Aynı paket/eşleme dosyalarının üzerine yazılmaz. Şu çalışmada canlı model ve insan puanlaması yapılmadı.
+
+27 Ekim 2026 güncellemesi: Yukarıda önceki sürümün kısıtı olarak belirtilen geçmiş/alıntı eşleşmeleri, yeni `tr-context-rules.v1` içinde ifadeye bağlı yönlendirmeyle ele alınmıştır. Yeni mantık, karşı örnekler ve kalan dil kapsamı sınırları [anahtar sözcük revizyonu](KEYWORD_ROUTER_REVISION.md) içindedir; genel Türkçe bağlam çözümlemesinin tamamlandığı iddia edilmez.
+
+3 Kasım 2026: Gelen 155 vakalık Excel için kaynak metin eşlemesi ve Türkçe alan/kanıt formu eklendi. Semantik v2.1'de gerçek eylem, niyet/ölme isteği/planla aynı sayılmaz; ayrı kanıtlı güncel niyet mevcut tarihsel kontrolün önceliğini artırabilir. Ayrıntılar ve sınırlılıklar: [Excel inceleme raporu](EXCEL_REVIEW_2026-11-03.md).

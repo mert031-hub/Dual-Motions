@@ -52,7 +52,7 @@ def test_triage_metrics_on_starter_cases_exposes_known_gaps():
     errs = {e["id"]: e["type"] for e in tm["errors"]}
     assert errs["S03"].startswith("FN")   # örtük ifade
     assert errs["S09"].startswith("FN")   # İngilizce
-    assert errs["S08"].startswith("FP")   # 'crash' tuzağı
+    assert 'S08' not in errs              # software crash is no longer substance withdrawal
     assert "S04" not in errs              # büyük İ artık yakalanıyor
     assert tm["n_unlabeled"] == 1         # S13 bilerek etiketsiz
 

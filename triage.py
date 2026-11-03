@@ -21,6 +21,11 @@ from clinical_constraints import evidence_metadata
 
 # eylem -> {mode, priority, message_key | directive_key}
 ACTION_SCHEMA: Dict[str, Dict[str, Any]] = {
+    "contextual_information": {"mode": "guided", "priority": 35, "directive_key": "contextual_information"},
+    "immediate_medical": {"mode": "canned", "priority": 120, "message_key": "immediate_medical"},
+    "urgent_other_safety": {"mode": "canned", "priority": 90, "message_key": "crisis_other_person"},
+    "injury_check_in": {"mode": "guided", "priority": 65, "directive_key": "injury_check_in"},
+    "physical_check_in": {"mode": "guided", "priority": 64, "directive_key": "physical_check_in"},
     "crisis_escalation": {"mode": "canned", "priority": 100, "message_key": "crisis_self_harm"},
     "urgent_professional_support": {"mode": "canned", "priority": 80, "message_key": "urgent_professional"},
     "urgent_medical_evaluation": {"mode": "canned", "priority": 70, "message_key": "urgent_medical"},
@@ -44,7 +49,8 @@ _RISK_ORDER = {"low": 1, "medium": 2, "high": 3}
 
 def _schema_for(flag: Dict[str, str]) -> Dict[str, Any]:
     schema = dict(ACTION_SCHEMA.get(flag["action"], _UNKNOWN_ACTION))
-    schema.update(FLAG_OVERRIDES.get(flag["name"], {}))
+    if schema['mode'] == 'canned' and flag['action'] == 'crisis_escalation':
+        schema.update(FLAG_OVERRIDES.get(flag["name"], {}))
     return schema
 
 
@@ -113,7 +119,8 @@ def run_hybrid_triage(message: str, semantic_fn: Optional[Callable[[str], Dict[s
     """Kural + semantik (LLM) trijaj. Sonuç `run_triage` ile aynı yapıdadır, ek olarak:
       semantic : semantik katmanın meta bilgisi (zamansal bağlam, güven, düşürülen bayraklar, hata)
       flags[i]['source'] : 'rule' | 'semantic' | 'both'
-    Kurallar belirleyici (deterministik) kalır; semantik katman yalnızca ekler. Emin olunamayan durumlarda
+    Semantik katman ekleyebilir veya ayrı kanıtlı güncel ihtiyaç için önceliği artırabilir;
+    mevcut kural önceliğini düşürmez. Emin olunamayan durumlarda
     'uncertain_risk' bayrağı ile güvenli yöne (nazik kontrol sorusu) gidilir.
     """
     from semantic_triage import hybrid_flags  # geç import: döngüsel bağımlılığı önler
@@ -133,4 +140,6 @@ def build_canned_message(canned_keys: List[str], lang: str, max_parts: int = 2) 
 def summarize_flags(flags: List[Dict[str, Any]]) -> str:
     if not flags:
         return "Yok"
-    return "; ".join(f"{f['name']} ({f['description']})" for f in flags)
+    return "; ".join(
+        f"{f['name']} (category candidate, not diagnosis; {f['description']}; "
+        f"context={f.get('context_status', 'unspecified')}; action={f['action']})" for f in flags)

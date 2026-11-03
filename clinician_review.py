@@ -62,7 +62,7 @@ def validate_rating(raw, item_ids):
     return result
 
 
-def export_packet(run_dir, output, seed=42):
+def export_packet(run_dir, output, seed=42, exclude_emergencies=False):
     run_dir, output = Path(run_dir), Path(output)
     manifest = json.loads((run_dir / 'manifest.json').read_text())
     if not manifest.get('persist_text') or not manifest.get('finished_at'):
@@ -77,12 +77,16 @@ def export_packet(run_dir, output, seed=42):
     for _, row in df.iterrows():
         if row['error'] or not row['final_output']:
             continue
+        if exclude_emergencies and int(row['triage_tier']) == 1:
+            continue
         item_id = uuid.uuid4().hex
         digest = hashlib.sha256((row['user_message'] + '\0' + row['final_output']).encode()).hexdigest()
         items.append({'item_id': item_id, 'user_message': row['user_message'],
-                      'response': row['final_output'], 'emotion_condition': row.get('emotion', ''),
+                      'response': row['final_output'],
                       'content_sha256': digest})
         mapping[item_id] = {'case_id': row['case_id'], 'system': row['system'], 'repeat': int(row['repeat']),
+                            'family_id': row.get('family_id', row['case_id']), 'triage_tier': int(row['triage_tier']),
+                            'model_or_manual_emotion': row.get('emotion', ''), 'emotion_source': row.get('emotion_source', ''),
                             'content_sha256': digest,
                             'judge_scores': {d: row[d] if row.get(d, '') != '' else None for d in judge.DIMENSIONS},
                             'judge_behavior_flags': {f: {'true':True, 'false':False}.get(str(row.get(f, '')).lower()) for f in judge.BEHAVIOR_FLAGS}}

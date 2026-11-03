@@ -49,6 +49,14 @@ def normalize_language(target_language: Optional[str], text: str = "") -> str:
 # Sabit mesajlar  (anahtar -> dil -> metin)
 # ------------------------------------------------------------------
 MESSAGES: Dict[str, Dict[str, str]] = {
+    "immediate_medical": {
+        "tr": "Anlattığınız kanama, olası zehirlenme veya belirgin fiziksel belirtiler acil tıbbi yardım gerektirebilir. Kendiniz ya da başka biri için yardım istiyorsanız beklemeden yerel acil numarayı arayın; Türkiye’deyseniz 112. Bunu yalnızca kaygı olarak değerlendiremem ve buradan tıbbi değerlendirme yapamam. Mümkünse güvenli bir kişinin yardımına başvurun; kendi güvenliğinizi tehlikeye atmayın.",
+        "en": "The bleeding, possible poisoning or serious physical symptoms described may need emergency medical help. For yourself or someone else, contact the local emergency number now (112 in Türkiye/Europe, 911 in the US). I cannot attribute this to anxiety or assess it medically here. If possible, seek help from a safe person without putting yourself in danger.",
+    },
+    "crisis_other_person": {
+        "tr": "Başka birinin şu an kendine veya birine zarar verebileceğini aktarıyorsunuz. Acil tehlike varsa yerel acil numarayı arayın; Türkiye’deyseniz 112. Kendi güvenliğinizi tehlikeye atarak müdahale etmeyin; mümkünse güvenli bir kişiden veya profesyonel ekipten yardım isteyin. Ben acil yardım ekibinin yerini tutamam.",
+        "en": "You are reporting that another person may harm themselves or someone else now. If there is immediate danger, call the local emergency number (112 in Türkiye/Europe, 911 in the US). Do not put yourself in danger by intervening; seek help from a safe person or professional team if possible. I cannot replace emergency services.",
+    },
     "crisis_self_harm": {
         "tr": (
             "Şu an çok zor bir şeyden geçtiğinizi duyuyorum ve bunu benimle paylaştığınız için teşekkür ederim. "
@@ -145,6 +153,22 @@ def get_message(key: str, lang: str = "en") -> str:
 # Policy'ye "zorunlu içerik" olarak verilir, Critic bunları denetler.
 # ------------------------------------------------------------------
 DIRECTIVES: Dict[str, str] = {
+    "contextual_information": (
+        "A matched phrase is presented as a quotation, fiction or a terminology question. Address that stated context; "
+        "do not assume the quoted speaker is the user or label the user as suicidal/violent/ill. Do not automatically add crisis guidance "
+        "solely for the quotation. Consider any separate current intent, injury or physical symptoms on their own; "
+        "never infer general safety from the educational context."
+    ),
+    "injury_check_in": (
+        "A possible self-injury is reported. Do not infer suicidal intent or assume the speaker is the injured person. "
+        "Address current injury/medical needs and encourage timely professional assessment; clarify whether there is ongoing bleeding, poisoning or immediate danger. "
+        "For serious or ongoing symptoms, advise emergency medical help without waiting for further chat."
+    ),
+    "physical_check_in": (
+        "Address the expressed physical need; do not explain chest pain or inability to take fluids as merely anxiety. "
+        "Encourage prompt medical assessment; serious current symptoms such as breathing difficulty, collapse or ongoing bleeding require emergency help. "
+        "Do not use absence of suicidal intent, weight or a risk score to dismiss physical needs."
+    ),
     "ask_safety_question": (
         "The patient may be expressing passive thoughts of death or hopelessness. Reflect their feelings briefly "
         "and warmly, then ask a direct, non-judgmental question about whether they are having thoughts "

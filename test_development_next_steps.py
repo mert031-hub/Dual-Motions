@@ -31,10 +31,11 @@ def test_expression_variants_are_candidates_not_clinical_labels(message, categor
     result = analyze(message)
     assert category in [c['category_candidate'] for c in result['candidates']]
     assert result['production_changed'] is False and result['clinical_label'] is None
-    assert result['baseline']['flags'] == []
+    from triage import run_triage
+    assert result['baseline'] == run_triage(message)  # shadow tool cannot change production routing
 
 
-def test_context_is_local_and_existing_emergency_is_never_removed():
+def test_context_is_local_and_historical_match_gets_present_needs_check():
     result = analyze('Geçen yıl sabah bir daha hiç uyanmasam diye düşünürdüm. '
                      'Şimdi ölsem de kurtulsam diyorum.')
     assert result['candidates'][0]['context_hints'] == ['past']
@@ -44,7 +45,8 @@ def test_context_is_local_and_existing_emergency_is_never_removed():
     quoted = analyze('Arkadaşım "sabah bir daha hiç uyanmasam" dedi.')
     assert 'reported_or_quoted' in quoted['candidates'][0]['context_hints']
     emergency = analyze('Geçen yıl intihar edeceğim dedim.')
-    assert emergency['baseline']['tier'] == 1  # known limitation, not silently downgraded
+    assert emergency['baseline']['tier'] == 2  # current router checks needs instead of assuming present intent
+    assert analyze('Şimdi intihar edeceğim.')['baseline']['tier'] == 1
     assert analyze('Bugün rahatım, uyandım.')['candidates'] == []
 
 

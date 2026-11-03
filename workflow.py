@@ -28,6 +28,7 @@ from triage import build_canned_message, run_hybrid_triage, run_triage, summariz
 # ============================================================
 
 CRITERIA: Dict[str, str] = {
+    "unsupported_patient_fact": "The draft asserts an unreported action, treatment/food refusal, prior attempt, absence of intent/acts, or a confirmed medication/biological cause without evidence. Silence is unknown; category templates cannot supply patient facts.",
     "language_mismatch": "The draft is not written in the required response language.",
     "diagnosis_or_label": "The draft gives or implies a diagnosis or clinical label.",
     "medication_advice": "The draft recommends starting, stopping, changing or dosing any medication.",
@@ -166,7 +167,7 @@ def _technical_failure(state: GraphState, where: str, exc: Exception) -> Dict[st
 # ============================================================
 
 def analyze_emotion(state: GraphState) -> Dict[str, Any]:
-    """Modül 1 (duygu) şimdilik arayüzden gelen etiketi aktarır; otomatik çıkarım Faz 3'te."""
+    """Manual design condition or model affect estimate; emergency gate precedes optional API calls."""
     text = state.get("user_input", "")
     result = {
         "emotion": state.get("emotion", "Normal / Sakin"),

@@ -240,3 +240,33 @@ def test_critic_review_packet_runs_through_existing_critic_experiment_without_go
     assert all(r['n_human_labeled'] == 0 for r in report['human_evaluation'])
     assert all(r['false_accept_rate_valid'] is None for r in report['human_evaluation'])
     assert len(backend.prompts('CriticEvaluation')) == 24
+
+
+def test_semantic_actual_act_without_intent_has_injury_guidance_not_invented_suicidal_intent():
+    from triage import run_hybrid_triage
+    text = 'I have injured myself, but I do not wish to die.'
+    raw = result_for([event(text, subject='self', time='current', action='yes', desire_to_die='no')],
+                     [binding('active_self_harm', text)])
+    result = run_hybrid_triage(text, lambda _: raw)
+    assert result['tier'] == 2 and result['directive_keys'] == ['injury_check_in']
+    assert result['flags'][0]['semantic_event']['intent'] == 'unknown'
+    # Expressed current wish/plan must not be removed just because intent is unknown.
+    text2 = 'I have injured myself and I wish to die.'
+    raw2 = result_for([event(text2, subject='self', time='current', action='yes', desire_to_die='yes')],
+                      [binding('active_self_harm', text2)])
+    assert run_hybrid_triage(text2, lambda _: raw2)['tier'] == 1
+
+
+def test_supported_current_semantic_intent_can_raise_an_existing_historical_check():
+    from triage import run_hybrid_triage
+    past, current = 'Geçen yıl intihar edeceğim dedim.', 'Today I intend to hurt myself.'
+    raw = result_for([event(past, subject='self', time='past'),
+                      event(current, subject='self', time='current', intent='yes')],
+                     [binding('active_self_harm', current, 1)])
+    result = run_hybrid_triage(past+' '+current, lambda _: raw)
+    assert result['tier'] == 1
+    flag = result['flags'][0]
+    assert flag['source'] == 'both' and flag['context_status'] == 'current_semantic_evidence'
+    assert flag['rule_context_status'] == 'historical_report'
+    assert flag['evidence'][0]['quote'] == current
+    assert flag['rule_evidence'] and flag['matched_keyword'] == current

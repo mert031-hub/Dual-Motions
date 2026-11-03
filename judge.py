@@ -65,7 +65,7 @@ def _context_block(ctx: Dict[str, Any]) -> str:
     clinician = f"\nProvided reference risk label (provenance: {ctx.get('label_status', 'unspecified')}): {label}" if label else ""
     return (
         f"<patient_message>{ctx['user_message']}</patient_message>\n"
-        f"Patient emotional state label: {ctx.get('emotion', 'Normal / Sakin')}\n"
+        "Assess expressed affect from the patient message. Model-predicted/default emotion labels are withheld to avoid circular evaluation.\n"
         f"Patient language: {ctx.get('language', 'unknown')}{clinician}"
     )
 

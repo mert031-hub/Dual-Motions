@@ -36,7 +36,7 @@ class ContextEvent(BaseModel):
     intent: TriState = Field(default='unknown', description='Expressed intent to cause harm; distinct from a wish to die. Never inferred from intrusive content alone.')
     desire_to_die: TriState = 'unknown'
     plan_or_preparation: TriState = 'unknown'
-    action: TriState = 'unknown'
+    action: TriState = Field(default='unknown', description='A reported actual harm/self-poisoning act, not an intrusive scenario, routine activity, avoidance or generic social withdrawal. This alone does not establish suicidal intent or injury severity.')
     injury_or_poisoning: TriState = 'unknown'
     physical_need: TriState = 'unknown'
     evidence: dict[str, list[EvidenceSpan]] = Field(default_factory=dict)

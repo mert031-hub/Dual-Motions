@@ -154,7 +154,7 @@ def build_kit(out_root, seed=42):
                                     'source_code_sha256': {name: digest((Path(__file__).parent/name).read_text())
                                       for name in ['context_schema.py', 'semantic_triage.py', 'synthetic_validation.py',
                                                    'validation_workbench.py', 'clinician_review.py', 'critic_review.py',
-                                                   'red_flags.py', 'triage.py', 'expression_review.py', 'clinical_constraints.py']},
+                                                   'red_flags.py', 'rule_context.py', 'triage.py', 'expression_review.py', 'clinical_constraints.py']},
                                     'clinical_source_inventory_sha256': digest((Path(__file__).parent/'docs/clinical_sources.json').read_text())})
     return out, summary
 

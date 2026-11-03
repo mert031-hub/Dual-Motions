@@ -69,3 +69,5 @@ python -m pytest -q
 
 Klinisyenle birlikte doldurulabilecek kısa form:
 [Katkı ve soru formu](CLINICIAN_QUESTIONS.md).
+
+27 Ekim 2026 güncellemesi: Gölge aracın kendisi hâlâ kararları değiştirmez, ancak gözlediği ana motor artık bağlam yönlendirmesi kullanmaktadır. Önceki tarihsel/alıntı kısıtlarının güncel durumu ve karşılaştırmalı sonuçlar: [anahtar sözcük motoru revizyonu](KEYWORD_ROUTER_REVISION.md).

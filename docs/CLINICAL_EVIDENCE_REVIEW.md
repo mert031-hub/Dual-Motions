@@ -59,3 +59,5 @@ Resmî kaynak sayfaları: [CG115](https://www.nice.org.uk/guidance/cg115), [CG18
 - Python derleme ve `git diff --check` kontrolleri geçti. Bu kontroller klinik geçerlilik, duyarlılık/özgüllük veya gerçek LLM yönerge uyumu kanıtı değildir.
 
 Sonraki revizyon notu: Deneysel semantik v2 kategoriye özel kanıt ve olay bağlamı kontrolü ekledi; ortak alıntının tek başına tüm kategorileri kabul ettirmesi teknik olarak engellendi. Bu, alıntının klinik yorumunu doğrulamaz. Ayrıntılar: [doğrulama çalışma paketi](VALIDATION_WORKBENCH.md).
+
+27 Ekim 2026 revizyonu: Ana deterministik motorun eşleşme→bağlam→eylem mantığı değiştirildi. Eski alt dizge motoru açık karşılaştırma girişi olarak korundu. Önceki “kural motoru değişmedi” ifadeleri o inceleme tarihindeki durumu anlatır; güncel kaynak/uyarlama ayrımı ve sonuçlar [anahtar sözcük motoru raporunda](KEYWORD_ROUTER_REVISION.md).

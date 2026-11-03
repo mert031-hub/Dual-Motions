@@ -62,7 +62,7 @@ HISTORY_WINDOW: int = _int("HISTORY_WINDOW", 10)     # Policy/Critic'e verilen s
 # ------------------------------------------------------------------
 # Sürümleme (deney kayıtları için)
 # ------------------------------------------------------------------
-PROMPT_VERSION: str = "2026.10.v3.2-context-bound"
+PROMPT_VERSION: str = "2026.11.v3.5-blinded-pilot"
 CODE_VERSION: str = "v3-research-prototype"
 
 # ------------------------------------------------------------------

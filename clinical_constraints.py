@@ -4,10 +4,18 @@ Recommendation/page provenance and limitations: docs/CLINICAL_EVIDENCE_REVIEW.md
 Shared by generation, auditing and research judges to avoid conflicting standards.
 """
 
-EVIDENCE_VERSION = 'uploaded-guidelines-2026-10-26-v1'
+EVIDENCE_VERSION = 'uploaded-guidelines-2026-10-26-v2-evidence-boundary'
 VALIDATION_STATUS = 'guideline_informed_not_clinically_validated'
 
 CONSTRAINTS = {
+    'evidence_limited_patient_facts': (
+        'Do not invent patient actions, treatment/food refusal, prior attempts, intentions or absence of plans/actions. '
+        'Not reported means unknown, not no. Separate a feared scenario, a wish to die, intent to cause harm and a completed act. '
+        'A symptom-free interval or recurring pattern does not establish present safety. '
+        'A medication or physical illness mentioned in a narrative, or a temporal association, does not establish causation; '
+        'reflect the person\'s causal account as their report, not a confirmed biological mechanism. '
+        'Template annotations and diagnostic headings are unverified context, never additional facts about the person.'
+    ),
     'needs_not_prediction': (
         'Do not predict suicide or future self-harm, declare someone low/no risk, or decide access to care '
         'from scores, keyword absence or model confidence. Routing labels are unvalidated software metadata. '

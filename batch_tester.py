@@ -27,6 +27,7 @@ import pandas as pd
 import config
 import judge
 from clinical_constraints import evidence_metadata
+from rule_context import ROUTING_VERSION
 import metrics
 from cases import cases_fingerprint, describe_cases, load_cases
 from workflow import run_pipeline
@@ -83,6 +84,7 @@ def _run_parallel(fn: Callable[[Any], Any], items: List[Any], max_workers: int,
 def _response_row(case: Dict[str, Any], system: str, repeat: int, res: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "case_id": case["id"], "title": case.get("title", ""), "language": case.get("language", ""),
+        "family_id": case.get('family_id', str(case['id'])),
         "category": case.get("category", ""), "adversarial_type": case.get("adversarial_type") or "none",
         "label_status": case.get("label_status", ""), "expected_red_flag": case.get("expected_red_flag"),
         "expected_risk": case.get("expected_risk"), "system": system, "repeat": repeat,
@@ -91,6 +93,8 @@ def _response_row(case: Dict[str, Any], system: str, repeat: int, res: Dict[str,
         "error": res.get("error", ""), "triage_decision": res.get("triage_decision", ""),
         "triage_tier": res.get("triage_tier", 0),
         "triage_flags": ",".join(f["name"] for f in res.get("triage_flags", [])),
+        "rule_observations": [{k: f[k] for k in ('name', 'action', 'context_status', 'rule_id', 'routing_version') if k in f}
+                              for f in res.get('triage_flags', []) if f.get('routing_version')],
         "critic_decision": res.get("critic_decision", ""),
         "critic_risk_level": res.get("critic_risk_level", ""), "critic_red_flag": res.get("critic_red_flag", ""),
         "critic_violated": ",".join(res.get("critic_violated_criteria", [])),
@@ -173,6 +177,7 @@ def run_batch_benchmark(
         source_hash.update(path.read_bytes())
 
     manifest = {
+        "rule_routing_version": ROUTING_VERSION,
         "clinical_evidence": evidence_metadata(),
         "run_id": run_id, "started_at": datetime.now().isoformat(timespec="seconds"),
         "systems": list(systems), "repeats": repeats, "pairs": [list(p) for p in pairs],

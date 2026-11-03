@@ -1,4 +1,4 @@
-"""Experimental additive semantic triage; never overrides deterministic flags."""
+"""Experimental semantic triage; never lowers deterministic routing priority."""
 import json
 from typing import Literal
 
@@ -100,7 +100,7 @@ def supported_categories(result, message):
 
 
 def hybrid_flags(message: str, semantic_fn=None):
-    from triage import run_triage
+    from triage import run_triage, _schema_for
 
     flags = [{**f, 'source': 'rule'} for f in detect_red_flags(message)]
     meta = {'attempted': False, 'llm_calls': 0, 'error': '', 'abstained': False, 'status': 'rule_emergency'}
@@ -116,20 +116,38 @@ def hybrid_flags(message: str, semantic_fn=None):
                      or not result.context.matches(message)
                      or (not result.risk_categories and result.temporal_context != 'current'))
         meta.update(result.model_dump())
-        meta.update(schema_version='dual-motions.semantic.v2', rejected_categories=rejected,
+        meta.update(schema_version='dual-motions.semantic.v2.1', rejected_categories=rejected,
                     evidence_check='exact_substring_and_context_only_not_clinical_validation',
                     accepted_categories=[])
         # One rejected category must not hide another supported present safety need.
         if not result.abstain and result.confidence == 'high':
             for category, quote in accepted.items():
+                binding = next(b for b in result.category_evidence if b.category == category)
+                event = result.context.events[binding.event_index]
+                rule = RED_FLAG_RULES[category]
+                # NG225 1.7.2: an act/injury without stated present intent needs
+                # injury/medical assessment, not an automatic suicidal-intent label.
+                action = ('injury_check_in' if category == 'active_self_harm' and event.intent != 'yes'
+                          and event.desire_to_die != 'yes' and event.plan_or_preparation != 'yes'
+                          and event.action == 'yes' else rule['action'])
+                proposed = {'name': category, 'description': rule['description'],
+                            'risk_level': rule['risk_level'], 'action': action,
+                            'matched_keyword': quote, 'source': 'semantic',
+                            'context_status': 'current_semantic_evidence',
+                            'evidence': [span.model_dump() for span in binding.evidence],
+                            'semantic_event': event.model_dump()}
                 existing = next((f for f in flags if f['name'] == category), None)
                 if existing:
                     existing['source'] = 'both'
+                    # Additive means no lowering of existing rule urgency; a
+                    # separately supported present intention may increase it.
+                    if _schema_for(proposed)['priority'] > _schema_for(existing)['priority']:
+                        existing['rule_context_status'] = existing.get('context_status', 'unspecified')
+                        existing['rule_evidence'] = existing.pop('evidence', [])
+                        existing['rule_context_evidence'] = existing.pop('context_evidence', [])
+                        existing.update({**proposed, 'source': 'both'})
                 else:
-                    rule = RED_FLAG_RULES[category]
-                    flags.append({'name': category, 'description': rule['description'],
-                                  'risk_level': rule['risk_level'], 'action': rule['action'],
-                                  'matched_keyword': quote, 'source': 'semantic'})
+                    flags.append(proposed)
                 meta['accepted_categories'].append(category)
     except Exception as exc:
         # Do not put provider responses, credentials or patient quotations in error strings.

@@ -147,13 +147,13 @@ def snapshot(pool_path, out_root):
             'report_selected': record['source_report_entry'] is not None,
             'tier': result['tier'], 'rule_risk_level': result['risk_level'],
             'flags': [dict(name=f['name'], action=f['action'],
-                           matched_keyword=f['matched_keyword']) for f in result['flags']],
+                           context_status=f.get('context_status'), rule_id=f.get('rule_id')) for f in result['flags']],
             'canned_keys': result['canned_keys'], 'directive_keys': result['directive_keys'],
         })
     def git(*args):
         return subprocess.check_output(['git', '-C', str(ROOT), *args], text=True).strip()
     code = {n: digest((ROOT/n).read_bytes()) for n in
-            ['development_pool.py', 'storage.py', 'red_flags.py', 'triage.py', 'messages.py', 'cases_legacy.py']}
+            ['development_pool.py', 'storage.py', 'red_flags.py', 'rule_context.py', 'triage.py', 'messages.py', 'cases_legacy.py']}
     summary = {
         'n_records': len(records),
         'n_with_rule_match': sum(bool(r['flags']) for r in observations),

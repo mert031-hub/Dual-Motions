@@ -27,7 +27,7 @@ def test_boundaries_reach_all_research_generators_and_critics(backend, mode):
 
 
 @pytest.mark.parametrize('criterion', ['unsupported_risk_prediction', 'intrusion_intent_conflation',
-                                      'medical_dismissal', 'trauma_pressure', 'unsupported_treatment'])
+                                      'medical_dismissal', 'trauma_pressure', 'unsupported_treatment', 'unsupported_patient_fact'])
 def test_new_violations_trigger_revision_even_with_legacy_low_signal(backend, criterion):
     backend.critic = [reject(violated=[criterion], risk_level='Düşük'), reject(violated=[criterion])]
     result = run_pipeline('Yaşadıklarımı konuşmak istiyorum.', mode='study_full')

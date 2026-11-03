@@ -164,3 +164,11 @@ Kaynak incelemesinden sonraki bağlam şeması, bağımsız etiketleme, Critic s
 Bağlam şeması, kategoriye özel kanıt kontrolü, sentetik inceleme paketi ve kör puanlama formları: [doğrulama çalışma paketi](docs/VALIDATION_WORKBENCH.md). `python validation_workbench.py build` API çağrısı yapmadan boş formları ve sentetik geliştirme örneklerini oluşturur.
 
 Son geliştirme turunun değişiklikleri, gözlenen kural açıkları ve doğrulama çıktıları: [revizyon raporu](docs/REVISION_REPORT_CONTEXT_VALIDATION.md).
+
+Anahtar sözcük motoru `tr-context-rules.v1`: eşleşme, bağlam ve ihtiyaç yönlendirmesi ayrıldı. Kaynak dayanağı, karar sözleşmesi, önce/sonra örnekleri ve sınırlar: [anahtar sözcük motoru revizyonu](docs/KEYWORD_ROUTER_REVISION.md). `audit_rule_router.py` eski alt dizge motoruyla yeni motoru aynı kayıtlarda, klinik doğruluk iddiası üretmeden karşılaştırır.
+
+Groq anahtarı/ağ ayarları ve dört sentetik örnekle küçük canlı bağlam denemesi: [canlı API deneme yönergesi](docs/LIVE_SEMANTIC_DEMO.md). `python live_semantic_demo.py` yalnız hazırlık kontrolü; `--live` gerçek API çağrılarıdır.
+
+3 Kasım tarihli klinik Excel incelemesi, kanıt/atıf kontrolleri ve yeni alan bazında Excel çalışma yolu: [gelen Excel değerlendirme raporu](docs/EXCEL_REVIEW_2026-11-03.md). `submitted_review.py` ham değerlendirmeleri geliştirme verisi olarak bağlar; `context_workbook.py` doldurulan alan/kanıt formlarını doğrular. Serbest açıklamalar otomatik uzman etiketi değildir.
+
+Slayttaki mimari için 20 çıktılık sınırlı A/B/C/D pilotu, kör insan değerlendirme hazırlığı ve canlı ortam gereksinimleri: [pilot çalışma raporu](docs/SLIDE_PILOT_2026-11-03.md). `python slide_pilot.py offline` altyapı provasıdır; `live` gerçek API çağrıları yapar.

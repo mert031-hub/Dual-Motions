@@ -1,14 +1,14 @@
 """Unvalidated keyword routing rules for a research prototype.
 
 These are not guideline-derived diagnostic criteria or suicide prediction rules.
-Past/negated/quoted phrases can still match; absence of a match does not establish
-safety. See docs/CLINICAL_EVIDENCE_REVIEW.md before interpreting their outputs.
+Context routing is implemented in rule_context.py. No match establishes safety.
+The legacy substring detector is retained for explicit before/after auditing.
 """
 import unicodedata
 from typing import Dict, List
 
-# NOT: Bu dosyadaki kural VERİSİ (RED_FLAG_RULES) klinisyen tarafından yönetilir ve
-# değiştirilmemiştir. Yalnızca _fold düzeltildi (Türkçe "İ" / "I" / "ı" hatası).
+# The original category/keyword data are preserved for historical comparison.
+# New physical-need routing is an explicitly versioned engineering interpretation.
 
 RED_FLAG_RULES: Dict[str, Dict[str, object]] = {
     "active_self_harm": {"description": "Aktif intihar veya kendine zarar verme niyeti/plani", "risk_level": "high", "keywords": ["kendime zarar verecegim", "intihar edecegim", "kendimi oldurecegim", "yogun intihar dusunceleri"], "action": "crisis_escalation"},
@@ -21,6 +21,7 @@ RED_FLAG_RULES: Dict[str, Dict[str, object]] = {
     "catatonia_or_stupor": {"description": "Agir psikomotor yavaslama veya katatoni riski", "risk_level": "high", "keywords": ["fisilti duzeyinde", "psikomotor retardasyon", "katatoni"], "action": "urgent_professional_support"},
     "severe_functional_decline": {"description": "Belirgin islev kaybi", "risk_level": "high", "keywords": ["ise gidemiyor", "dukkani acamiyor", "yataktan cikamiyor", "gunluk islerini yurutemez"], "action": "urgent_human_support"},
     "severe_dehydration_or_nutrition_risk": {"description": "Dehidratasyon veya malnutrisyon riski", "risk_level": "high", "keywords": ["beslenme reddi", "sivi reddi", "dehidratasyon", "malnutrisyon"], "action": "urgent_medical_evaluation"},
+    "acute_physical_need": {"description": "Kanama, zehirlenme veya akut fiziksel ihtiyac ifadesi; tani degildir", "risk_level": "high", "keywords": [], "action": "immediate_medical"},
 }
 
 def _fold(text: str) -> str:
@@ -32,10 +33,11 @@ def _fold(text: str) -> str:
     text = text.replace("İ", "i").replace("I", "i").replace("ı", "i")
     text = unicodedata.normalize("NFKD", text.casefold())
     text = "".join(ch for ch in text if not unicodedata.combining(ch))
-    text = text.replace("’", "'").replace("‘", "'")
+    text = text.replace("’", "'").replace("‘", "'").replace('“', '"').replace('”', '"')
     return " ".join(text.split())
 
-def detect_red_flags(message: str) -> List[Dict[str, str]]:
+def detect_keyword_flags(message: str) -> List[Dict[str, str]]:
+    """Frozen legacy substring behavior, only for historical comparison."""
     normalized = _fold(message)
     found = []
     for name, rule in RED_FLAG_RULES.items():
@@ -44,3 +46,8 @@ def detect_red_flags(message: str) -> List[Dict[str, str]]:
                 found.append({"name": name, "description": rule["description"], "risk_level": rule["risk_level"], "action": rule["action"], "matched_keyword": keyword})
                 break
     return found
+
+
+def detect_red_flags(message: str) -> List[Dict[str, str]]:
+    from rule_context import detect_contextual_flags
+    return detect_contextual_flags(message)

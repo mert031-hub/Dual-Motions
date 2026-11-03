@@ -68,3 +68,5 @@ Bu yollar yerel, Git dışında tutulan araştırma çıktılarıdır. Kullanım
 ## Açık kalan işler
 
 Gerçek model erişimiyle yanıt/Critic sınaması; yetkin ve bağımsız insan değerlendirmesi; olay hizalama ve gerekçeli uzlaşı; ayrılmış yeni senaryo aileleriyle bağımsız sınama; buna göre ana akışın bağlam kararlarını değiştirme incelemesi. Hiçbiri kullanıcıdan hemen yeni örnek sağlamasını gerektiren bir teknik blok olarak bırakılmadı: sentetik paket ve boş formlar hazır. Ancak bağımsız klinik değerlendirme yazılım tarafından taklit edilemez. Bu geliştirme turunda otomatik tanı, ilaç protokolü veya gerçek kullanıcıya yeni bir risk düşürme kararı devreye alınmadı.
+
+27 Ekim 2026 devam revizyonu: Bu raporda açık olarak kaydedilen anahtar sözcük sorunları ayrı bir geliştirme turunda ele alındı. Güncel karar sözleşmesi ve sonuçlar [anahtar sözcük motoru revizyonunda](KEYWORD_ROUTER_REVISION.md); önceki rapordaki sayılar tarihsel başlangıç ölçümüdür.
