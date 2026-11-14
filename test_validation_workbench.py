@@ -124,7 +124,7 @@ def test_known_emergency_never_waits_for_context_or_network():
 
 
 def load(path):
-    return json.loads(Path(path).read_text())
+    return json.loads(Path(path).read_text(encoding='utf-8'))
 
 
 def test_kit_is_blinded_unlabeled_and_uses_separate_pending_forms_without_api(tmp_path, monkeypatch):
@@ -184,7 +184,7 @@ def test_nested_context_evidence_is_minimized_by_default():
 def test_offline_stub_is_not_exported_as_real_model_quality(tmp_path):
     write = tmp_path/'run'
     write.mkdir()
-    (write/'manifest.json').write_text(json.dumps(dict(persist_text=True, finished_at='now', execution_mode='offline_stub')))
+    (write/'manifest.json').write_text(json.dumps(dict(persist_text=True, finished_at='now', execution_mode='offline_stub')), encoding='utf-8')
     with pytest.raises(ValueError, match='Offline fixtures'):
         export_packet(write, tmp_path/'packet.json')
 

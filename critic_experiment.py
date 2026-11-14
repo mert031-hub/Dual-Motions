@@ -89,7 +89,7 @@ if __name__ == '__main__':
     parser.add_argument('--pricing', help='JSON model -> input_per_million/output_per_million; user-supplied current tariffs')
     parser.add_argument('--out', required=True)
     args = parser.parse_args()
-    pricing = json.loads(Path(args.pricing).read_text()) if args.pricing else None
-    report = evaluate(json.loads(Path(args.examples).read_text()), [m.strip() for m in args.models.split(',') if m.strip()], args.reference, pricing)
+    pricing = json.loads(Path(args.pricing).read_text(encoding='utf-8')) if args.pricing else None
+    report = evaluate(json.loads(Path(args.examples).read_text(encoding='utf-8')), [m.strip() for m in args.models.split(',') if m.strip()], args.reference, pricing)
     write_json(args.out, report)
     raise SystemExit(1 if any(r['error'] for r in report['rows']) else 0)

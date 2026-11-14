@@ -15,8 +15,8 @@ def pool_fixture(tmp_path):
               (33, 'Keşke sabah bir daha hiç uyanmasam.', 'Kırmızı'),
               (34, 'Kendimi öldüreceğim.', 'Sarı')]]
     cases, report = tmp_path/'cases.py', tmp_path/'report.py'
-    cases.write_text('CASES = ' + repr(items))
-    report.write_text("RED_FLAG_CASES = [{'case_id': 33}]")
+    cases.write_text('CASES = ' + repr(items), encoding='utf-8')
+    report.write_text("RED_FLAG_CASES = [{'case_id': 33}]", encoding='utf-8')
     return prepare(cases, report, tmp_path/'pools', persist_text=True)
 
 
@@ -53,11 +53,11 @@ def test_context_is_local_and_historical_match_gets_present_needs_check():
 def test_expression_report_omits_text_and_has_no_quality_metrics(tmp_path):
     pool = pool_fixture(tmp_path)
     out = review_pool(pool, tmp_path/'expressions')
-    data = json.loads((out/'review.json').read_text())
+    data = json.loads((out/'review.json').read_text(encoding='utf-8'))
     assert data['summary']['n_records'] == 3
     assert data['summary']['n_candidate_records'] == 1
     assert data['summary']['clinical_metrics'] is None
-    assert 'sabah bir daha' not in (out/'review.json').read_text()
+    assert 'sabah bir daha' not in (out/'review.json').read_text(encoding='utf-8')
 
 
 def test_pilot_plan_is_explicit_four_arms_and_no_labels(tmp_path):
@@ -79,14 +79,14 @@ def test_offline_pilot_runs_real_four_arm_graph_without_provider_access(tmp_path
     assert checks['n_expected'] == checks['n_observed'] == 8
     assert checks['n_errors'] == checks['n_affect_errors'] == 0
     assert checks['status'] == 'offline_infrastructure_only'
-    comparisons = json.loads((out/'arm_comparison.json').read_text())
+    comparisons = json.loads((out/'arm_comparison.json').read_text(encoding='utf-8'))
     assert len(comparisons) == 2 and all(set(c['arms']) == set(ARMS) for c in comparisons)
     emergency = next(c for c in comparisons if c['case_id'].endswith(':034'))
     assert all(a['triage_tier'] == 1 and a['llm_calls'] == 0 for a in emergency['arms'].values())
-    report = json.loads((out/'research_report.json').read_text())
+    report = json.loads((out/'research_report.json').read_text(encoding='utf-8'))
     assert report['status'] == 'offline_infrastructure_only'
     assert all(c['n'] == 0 for c in report['contrasts'].values())
-    assert 'Bugün biraz yorgunum.' not in (out/'responses.jsonl').read_text()
+    assert 'Bugün biraz yorgunum.' not in (out/'responses.jsonl').read_text(encoding='utf-8')
     # The temporary offline substitution is restored after the run.
     with pytest.raises(BaseException, match='Provider called'):
         llm_factory.get_chat_model('x', 0)
@@ -106,12 +106,12 @@ def test_judged_pilot_uses_real_runner_with_scripted_provider(backend, tmp_path,
     pool = pool_fixture(tmp_path)
     out, checks = run_pilot(pool, [1], tmp_path/'scripted', mode='live', judge_enabled=True)
     assert checks['n_observed'] == 4 and checks['n_errors'] == checks['n_judge_incomplete'] == 0
-    manifest = json.loads((out/'manifest.json').read_text())
+    manifest = json.loads((out/'manifest.json').read_text(encoding='utf-8'))
     assert manifest['n_judged'] == 4
     assert backend.kinds().count('AbsoluteJudgment') == 4
     assert backend.kinds().count('PairwiseJudgment') == 4
-    assert len((out/'pairwise.csv').read_text().splitlines()) == 5
-    comparisons = json.loads((out/'arm_comparison.json').read_text())[0]['arms']
+    assert len((out/'pairwise.csv').read_text(encoding='utf-8').splitlines()) == 5
+    comparisons = json.loads((out/'arm_comparison.json').read_text(encoding='utf-8'))[0]['arms']
     assert comparisons['study_baseline']['response_policy'] == {}
     assert comparisons['study_policy']['response_policy']['strategy']
     assert comparisons['study_critic']['critic_decision'] == 'Onaylandı'

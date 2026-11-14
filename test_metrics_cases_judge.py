@@ -78,7 +78,9 @@ def test_paired_comparison_and_summary():
 
 
 # ---------------- cases ----------------
-def test_load_cases_merges_real_legacy_and_starter():
+def test_load_cases_merges_real_legacy_and_starter(monkeypatch, tmp_path):
+    # Yerelde gerçek cases_expert.json bulunsa bile sayım bundan etkilenmesin.
+    monkeypatch.setattr(cases_mod, "EXPERT_JSON_PATH", str(tmp_path / "yok.json"))
     cs = cases_mod.load_cases()
     ids = {c["id"] for c in cs}
     assert {"1", "50", "S01", "S14"} <= ids and len(cs) == 64

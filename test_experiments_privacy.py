@@ -32,7 +32,7 @@ def test_benchmark_uses_observed_hybrid_predictions_without_extra_calls(backend,
     assert all(r['metrics']['n_evaluated'] == 0 for r in out['triage_by_system'] if r['cohort'] == 'expert_labeled')
     disk = pd.read_csv(out['run_dir'] + '/responses.csv', keep_default_na=False)
     assert disk.user_message.eq('').all() and disk.final_output.eq('').all()
-    assert case['user_message'] not in (tmp_path / out['manifest']['run_id'] / 'responses.jsonl').read_text()
+    assert case['user_message'] not in (tmp_path / out['manifest']['run_id'] / 'responses.jsonl').read_text(encoding='utf-8')
     assert out['manifest']['critic_model'] == config.CRITIC_MODEL
     assert out['manifest']['source_sha256']
     assert out['research_report']['status'] == 'exploratory_not_clinically_validated'
@@ -65,10 +65,10 @@ def test_audit_is_textless_by_default_and_session_delete_preserves_others(tmp_pa
     log.record(first, 'turn', text='private narrative user@example.com', system='study_full', ignored='not permitted')
     log.record(second, 'turn', system='study_policy')
     path = next(tmp_path.glob('*.jsonl'))
-    assert 'private narrative' not in path.read_text() and 'user@example.com' not in path.read_text()
-    assert 'ignored' not in path.read_text()
+    assert 'private narrative' not in path.read_text(encoding='utf-8') and 'user@example.com' not in path.read_text(encoding='utf-8')
+    assert 'ignored' not in path.read_text(encoding='utf-8')
     log.delete_session(first)
-    assert first not in path.read_text() and second in path.read_text()
+    assert first not in path.read_text(encoding='utf-8') and second in path.read_text(encoding='utf-8')
     assert log.purge(0) == 1
     with pytest.raises(ValueError):
         log.purge(-1)
@@ -78,8 +78,8 @@ def test_blind_packet_separates_identity_and_agreement_omits_unrated_dimensions(
     sample = [next(c for c in cases.STARTER_CASES if c['id'] == 'S07')]
     out = batch_tester.run_batch_benchmark(cases=sample, systems=['study_policy'], out_root=str(tmp_path/'runs'), persist_text=True)
     paths = clinician_review.export_packet(out['run_dir'], tmp_path/'packet.json')
-    packet = json.loads((tmp_path/'packet.json').read_text())
-    private = json.loads((tmp_path/'packet.mapping.json').read_text())
+    packet = json.loads((tmp_path/'packet.json').read_text(encoding='utf-8'))
+    private = json.loads((tmp_path/'packet.mapping.json').read_text(encoding='utf-8'))
     assert len(packet['items']) == paths['n_items'] == 1
     assert 'system' not in packet['items'][0] and 'judge_scores' not in packet['items'][0]
     item = packet['items'][0]['item_id']

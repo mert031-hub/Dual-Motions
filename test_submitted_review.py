@@ -1,6 +1,7 @@
 """Synthetic workbook integration tests; no real clinical labels or patient data."""
 from datetime import date
 import json
+import os
 from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
@@ -18,7 +19,7 @@ def fixture_files(tmp_path, texts=(TEXT, 'Bugün biraz yorgunum.')):
                 'user_message': text, 'message_sha256': sha(text.encode()), 'usage': 'development_only',
                 'expected_red_flag': None} for n, text in enumerate(texts, 1)]
     pool = tmp_path/'pool.json'
-    pool.write_text(json.dumps({'schema': 'dual-motions.development-pool.v1', 'records': records}, ensure_ascii=False))
+    pool.write_text(json.dumps({'schema': 'dual-motions.development-pool.v1', 'records': records}, ensure_ascii=False), encoding='utf-8')
     wb = Workbook()
     sheet = wb.active
     sheet.title = DATA_SHEET
@@ -39,7 +40,7 @@ def fixture_files(tmp_path, texts=(TEXT, 'Bugün biraz yorgunum.')):
 def prepare_fixture(tmp_path, texts=(TEXT, 'Bugün biraz yorgunum.')):
     source, pool = fixture_files(tmp_path, texts)
     out = prepare_review(source, pool, tmp_path/'out', persist_text=True)
-    return out, json.loads((out/'annotations.json').read_text()), source, pool
+    return out, json.loads((out/'annotations.json').read_text(encoding='utf-8')), source, pool
 
 
 def test_review_is_linked_without_expert_promotion_or_prose_instructions(tmp_path):
@@ -55,9 +56,10 @@ def test_review_is_linked_without_expert_promotion_or_prose_instructions(tmp_pat
     assert bundle['reviewer_provenance']['role'] is None
     assert source.read_bytes() == (out/'source.xlsx').read_bytes()
     assert bundle['source']['workbook_sha256'] == sha(source.read_bytes())
-    assert (out/'annotations.json').stat().st_mode & 0o077 == 0
-    assert (out/'context_review.xlsx').stat().st_mode & 0o077 == 0
-    assert 'hasta' not in (out/'quality_report.json').read_text().lower()  # no narrative/review prose in quality report
+    if os.name != 'nt':  # POSIX izinleri Windows'ta uygulanmaz
+        assert (out/'annotations.json').stat().st_mode & 0o077 == 0
+        assert (out/'context_review.xlsx').stat().st_mode & 0o077 == 0
+    assert 'hasta' not in (out/'quality_report.json').read_text(encoding='utf-8').lower()  # no narrative/review prose in quality report
     progress = read_context_workbook(out/'context_review.xlsx', bundle)
     assert progress['records'] == [] and progress['summary']['n_pending_reviewer_cases'] == 2
 
@@ -201,9 +203,9 @@ def test_spreadsheet_export_preserves_formula_like_narrative_as_text(tmp_path):
 
 def test_duplicate_canonical_ids_are_rejected_before_archiving(tmp_path):
     source, pool_path = fixture_files(tmp_path)
-    pool = json.loads(pool_path.read_text())
+    pool = json.loads(pool_path.read_text(encoding='utf-8'))
     pool['records'][1]['id'] = pool['records'][0]['id']
-    pool_path.write_text(json.dumps(pool))
+    pool_path.write_text(json.dumps(pool), encoding='utf-8')
     with pytest.raises(ValueError):
         prepare_review(source, pool_path, tmp_path/'out', persist_text=True)
     assert not (tmp_path/'out').exists()

@@ -27,7 +27,7 @@ def test_opt_in_demo_records_errors_and_canned_bypasses_without_text_or_secrets(
     assert report['n_errors'] == 2 and report['clinical_metrics'] is None
     assert report['execution_mode'] == 'live'
     assert backend.kinds().count('SemanticTriageResult') == 2
-    disk = (out/'report.json').read_text()
+    disk = (out/'report.json').read_text(encoding='utf-8')
     assert 'private-test-fixture-key' not in disk and 'private-provider-response' not in disk
     assert 'Geçen yıl' not in disk
     assert all(r['triage_tier'] == 1 for r in report['rows'] if not r['semantic_attempted'])

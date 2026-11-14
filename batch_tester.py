@@ -96,6 +96,7 @@ def _response_row(case: Dict[str, Any], system: str, repeat: int, res: Dict[str,
         "rule_observations": [{k: f[k] for k in ('name', 'action', 'context_status', 'rule_id', 'routing_version') if k in f}
                               for f in res.get('triage_flags', []) if f.get('routing_version')],
         "critic_decision": res.get("critic_decision", ""),
+        "critic_reason": str(res.get("critic_reason", ""))[:600],
         "critic_risk_level": res.get("critic_risk_level", ""), "critic_red_flag": res.get("critic_red_flag", ""),
         "critic_violated": ",".join(res.get("critic_violated_criteria", [])),
         "revision_count": res.get("revision_count", 0), "llm_calls": res.get("llm_calls", 0),
@@ -169,8 +170,8 @@ def run_batch_benchmark(
     run_dir = os.path.join(out_root or OUT_ROOT, run_id)
     os.makedirs(run_dir, mode=0o700, exist_ok=False)
     root = Path(__file__).resolve().parent
-    revision = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=root, capture_output=True, text=True)
-    dirty = subprocess.run(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=root, capture_output=True, text=True)
+    revision = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=root, capture_output=True, text=True, encoding='utf-8')
+    dirty = subprocess.run(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=root, capture_output=True, text=True, encoding='utf-8')
     source_hash = hashlib.sha256()
     for path in sorted(root.glob('*.py')):
         source_hash.update(path.name.encode())
@@ -364,6 +365,23 @@ def run_batch_benchmark(
     }
 
 
+def select_cases(cases: List[Dict[str, Any]], ids_text: str) -> List[Dict[str, Any]]:
+    """--case-ids için: yalnızca verilen kimlikleri tutar (vaka dosyasındaki sıra korunur).
+
+    Kimlikler virgül, noktalı virgül veya boşlukla ayrılabilir. Bilinmeyen kimlik varsa sessizce
+    atlamak yerine hata verir: yanlış yazılmış bir kimlik koşuyu küçültmesin.
+    """
+    wanted = ids_text.replace(",", " ").replace(";", " ").split()
+    if not wanted:
+        raise ValueError("--case-ids boş")
+    known = {str(c["id"]) for c in cases}
+    missing = [i for i in wanted if i not in known]
+    if missing:
+        raise ValueError(f"Bilinmeyen vaka kimliği: {missing}")
+    keep = set(wanted)
+    return [c for c in cases if str(c["id"]) in keep]
+
+
 if __name__ == "__main__":  # python batch_tester.py  -> komut satırından çalıştır
     import argparse
 
@@ -375,8 +393,26 @@ if __name__ == "__main__":  # python batch_tester.py  -> komut satırından çal
     ap.add_argument("--no-judge", action="store_true")
     ap.add_argument("--persist-text", action="store_true", help="Yalnızca onaylı sentetik araştırma verisi için metinleri diske yaz")
     ap.add_argument('--affect-mode', choices=['manual', 'model'], default='manual')
+    ap.add_argument('--expert-only', action='store_true',
+                    help='Starter ve eski vakaları dışarıda bırak; yalnızca CASES_EXPERT_JSON içindeki vakaları çalıştır')
+    ap.add_argument('--no-pairs', action='store_true',
+                    help='Kör A/B karşılaştırmasını çalıştırma (yargıç token kotasının yaklaşık beşte birini korur)')
+    ap.add_argument('--case-ids', default=None,
+                    help='Yalnızca bu vaka kimliklerini çalıştır (virgülle ayrılmış, örn. X051,X052,S03)')
     args = ap.parse_args()
+    cases = None
+    if args.expert_only:
+        cases = load_cases(include_starter=False, include_legacy=False)
+        if not cases:
+            raise SystemExit('--expert-only: CASES_EXPERT_JSON içinde vaka bulunamadı (yol ortam değişkeninde mutlak olmalı)')
+    if args.case_ids is not None:
+        try:
+            cases = select_cases(cases if cases is not None else load_cases(), args.case_ids)
+        except ValueError as exc:
+            raise SystemExit(f'--case-ids: {exc}')
     out = run_batch_benchmark(
+        cases=cases,
+        pairs=[] if args.no_pairs else None,
         systems=[s.strip() for s in args.systems.split(",") if s.strip()], repeats=args.repeats,
         max_cases=args.max_cases, max_workers=args.workers, judge_enabled=not args.no_judge,
         persist_text=args.persist_text,

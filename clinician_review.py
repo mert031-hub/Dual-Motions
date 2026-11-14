@@ -64,7 +64,7 @@ def validate_rating(raw, item_ids):
 
 def export_packet(run_dir, output, seed=42, exclude_emergencies=False):
     run_dir, output = Path(run_dir), Path(output)
-    manifest = json.loads((run_dir / 'manifest.json').read_text())
+    manifest = json.loads((run_dir / 'manifest.json').read_text(encoding='utf-8'))
     if not manifest.get('persist_text') or not manifest.get('finished_at'):
         raise ValueError('A completed text-enabled synthetic-data run is required')
     if manifest.get('execution_mode') == 'offline_stub':
@@ -72,7 +72,8 @@ def export_packet(run_dir, output, seed=42, exclude_emergencies=False):
     private = output.with_suffix('.mapping.json')
     if output.exists() or private.exists():
         raise FileExistsError('Refuse to overwrite a packet or private mapping')
-    df = pd.read_csv(run_dir / 'responses.csv', dtype={'case_id': str}).fillna('')
+    df = pd.read_csv(run_dir / 'responses.csv', dtype={'case_id': str})
+    df = df.astype(object).where(df.notna(), '')
     items, mapping = [], {}
     for _, row in df.iterrows():
         if row['error'] or not row['final_output']:
@@ -147,7 +148,7 @@ if __name__ == '__main__':
     if args.action == 'export':
         print(export_packet(args.run_dir, args.out))
     else:
-        ratings, mapping = json.loads(Path(args.ratings).read_text()), json.loads(Path(args.mapping).read_text())
+        ratings, mapping = json.loads(Path(args.ratings).read_text(encoding='utf-8')), json.loads(Path(args.mapping).read_text(encoding='utf-8'))
         if ratings['packet_id'] != mapping['packet_id']:
             raise ValueError('Packet mismatch')
         write_json(args.out, agreement(ratings['ratings'], mapping))

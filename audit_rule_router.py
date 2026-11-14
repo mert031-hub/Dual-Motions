@@ -66,7 +66,7 @@ def audit(out_root, pool_path=None):
     write_json(out/'comparison.json', {'routing_version': ROUTING_VERSION, 'cohorts': cohorts,
                                        'clinical_metrics': None, 'interpretation': 'Routing changes, not clinical accuracy. Tiers: 0 no rule match (not safe); 1 canned; 2 guided.'})
     code = ['red_flags.py', 'rule_context.py', 'triage.py', 'messages.py', 'audit_rule_router.py', 'synthetic_validation.py']
-    git_revision = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True)
+    git_revision = subprocess.run(['git', 'rev-parse', 'HEAD'], cwd=ROOT, capture_output=True, text=True, encoding='utf-8')
     write_json(out/'manifest.json', {'routing_version': ROUTING_VERSION, 'legacy': 'frozen_original_substring_detector',
                                     'code_sha256': {p: sha((ROOT/p).read_bytes()) for p in code},
                                     'clinical_inventory_sha256': sha((ROOT/'docs/clinical_sources.json').read_bytes()),

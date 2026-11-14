@@ -57,7 +57,7 @@ def test_no_match_is_not_a_validated_negative_and_emergency_still_skips_network(
 
 
 def test_source_inventory_covers_every_upload_and_verifies_duplicates():
-    inventory = json.loads((Path(__file__).parent/'docs/clinical_sources.json').read_text())
+    inventory = json.loads((Path(__file__).parent/'docs/clinical_sources.json').read_text(encoding='utf-8'))
     sources = {s['id']: s for s in inventory['sources']}
     assert len(sources) == 16
     unique = [s for s in sources.values() if not s['duplicate_of']]

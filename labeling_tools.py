@@ -164,7 +164,7 @@ def _read_table(path: str) -> pd.DataFrame:
     if path.lower().endswith((".xlsx", ".xlsm")):
         xl = pd.ExcelFile(path)
         sheet = "Etiketleme" if "Etiketleme" in xl.sheet_names else xl.sheet_names[0]
-        df = xl.parse(sheet, dtype=str)
+        df = pd.read_excel(xl, sheet_name=sheet, dtype=str)
     else:
         df = pd.read_csv(path, sep=None, engine="python", encoding="utf-8-sig", dtype=str)
     df.columns = [str(c).strip() for c in df.columns]

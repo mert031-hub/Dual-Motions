@@ -203,10 +203,10 @@ def test_audit_is_text_minimized_deterministic_and_never_invents_accuracy(tmp_pa
     with pytest.raises(ValueError):
         compare_records([record, record])
     out = audit(tmp_path)
-    report = json.loads((out/'comparison.json').read_text())
+    report = json.loads((out/'comparison.json').read_text(encoding='utf-8'))
     assert report['clinical_metrics'] is None
     assert report['cohorts']['synthetic_development_not_independent_test']['summary']['n_records'] == 16
-    assert json.loads((out/'manifest.json').read_text())['n_provider_calls'] == 0
+    assert json.loads((out/'manifest.json').read_text(encoding='utf-8'))['n_provider_calls'] == 0
 
 
 def test_faintness_alone_is_not_treated_as_a_validated_emergency_threshold():

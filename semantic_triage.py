@@ -9,7 +9,7 @@ import config
 import llm_factory
 from clinical_constraints import guidance_block
 from red_flags import RED_FLAG_RULES, detect_red_flags
-from context_schema import ContextAnnotation, EvidenceSpan
+from context_schema import ContextAnnotation, ContextEvent, EvidenceSpan
 
 
 class CategoryEvidence(BaseModel):
@@ -60,6 +60,12 @@ def classify(message: str) -> SemanticTriageResult:
         'Unwanted thoughts alone do not establish intent. Do not infer intent or actions that are not expressed. '
         'If uncertain, abstain; confidence is a self-report, not a calibrated probability. '
         'Do not infer an absence of risk from an earlier improvement or from silence. '
+        'OUTPUT FORMAT RULES (validity only; they do not change what counts as risk): '
+        'In context.events[i].evidence every key must be exactly one of these event field names: '
+        + ', '.join(f for f in ContextEvent.model_fields if f != 'evidence') + '. '
+        'Every event field whose value is not "unknown" - including subject and time - needs its own key with 1 to 5 '
+        'quotes copied exactly from the message; a field whose value is "unknown" must have no key. '
+        'In every evidence span give only "quote" and omit start and end entirely; never give only one of them. '
         + guidance_block() + '\nCategories: ' + json.dumps({k: v['description'] for k, v in RED_FLAG_RULES.items()}, ensure_ascii=False)
     )
     raw = llm_factory.call_with_retry(lambda: schema.invoke([

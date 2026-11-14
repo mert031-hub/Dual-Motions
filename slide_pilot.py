@@ -62,7 +62,7 @@ def network_snapshot(path='/etc/codex/network-policy.json'):
     p = Path(path)
     if not p.exists():
         return {'source': 'startup_snapshot', 'status': 'unknown', 'verified_live_access': False}
-    data = json.loads(p.read_text())
+    data = json.loads(p.read_text(encoding='utf-8'))
     policy = data.get('http_network_policy', {})
     mode = policy.get('type')
     domains = [r.get('host', '') for r in policy.get('egress_rules', [])]
@@ -179,7 +179,7 @@ def run(out_root='runtime/slide_pilots', mode='offline_stub', families=1, max_at
         exported = export_packet(run_dir, out/'reviewer/responses.json', exclude_emergencies=True)
         private = Path(exported['private_mapping'])
         private.replace(out/'private/response_mapping.json')
-        packet = json.loads((out/'reviewer/responses.json').read_text())
+        packet = json.loads((out/'reviewer/responses.json').read_text(encoding='utf-8'))
         for reviewer in ('R1', 'R2'):
             write_json(out/f'reviewer/response_ratings_{reviewer}.json', blank_ratings(packet, reviewer))
         checks['blinded_response_packet_exported'] = True

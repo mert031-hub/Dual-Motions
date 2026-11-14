@@ -12,14 +12,14 @@ from storage import json_safe, write_json
 
 def build_report(run_dir):
     run_dir = Path(run_dir)
-    manifest = json.loads((run_dir / 'manifest.json').read_text())
+    manifest = json.loads((run_dir / 'manifest.json').read_text(encoding='utf-8'))
     if not manifest.get('finished_at'):
         raise ValueError('Run has not completed')
     df = pd.read_csv(run_dir / 'responses.csv', dtype={'case_id': str})
     expected = manifest['n_cases'] * len(manifest['systems']) * manifest['repeats']
     if len(df) != expected or df.duplicated(['case_id', 'system', 'repeat']).any():
         raise ValueError('Incomplete or duplicate run records')
-    df['error'] = df['error'].fillna('')
+    df['error'] = df['error'].astype(object).where(df['error'].notna(), '')
     df['judged'] = df['judged'].map(lambda v: str(v).lower() == 'true')
     for column in judge.DIMENSIONS:
         if column not in df:
@@ -85,7 +85,7 @@ def build_report(run_dir):
         r = json_safe(result)
         lines.append(f"- {name}: n={r['n']}; difference={r['mean_diff']}; bootstrap interval={r['ci']}")
     lines += ['', 'Limitations:', ''] + ['- ' + x for x in report['limitations']]
-    (run_dir / 'research_report.md').write_text('\n'.join(lines) + '\n')
+    (run_dir / 'research_report.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
     return json_safe(report)
 
 

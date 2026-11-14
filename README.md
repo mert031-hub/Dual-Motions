@@ -3,6 +3,7 @@
 Metin tabanlı duygu tahmini, ayrı yanıt stratejisi kontrolü, LLM üretimi ve
 Therapeutic Critic/revizyon zinciri. Tanı veya tedavi sistemi değildir.
 Ana proje kapsamı ve bekleyen bilimsel kararlar: [araştırma kapsamı](docs/RESEARCH_SCOPE.md).
+Dönem içi ilerleme, bulgular ve açık işler: [dönem notları](docs/DONEM_NOTLARI_KASIM.md).
 
 ## Kurulum ve yerel kullanım
 
@@ -16,6 +17,15 @@ python -m pytest -q
 streamlit run app.py --server.headless=true --browser.gatherUsageStats=false
 ```
 
+Windows (PowerShell):
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt   # lock dosyası Linux içinse --require-hashes Windows'ta hata verebilir
+python -m pytest -q
+```
+
 Arayüz, kural triyajı ve testler anahtarsız çalışır. Canlı model çağrıları için
 `GROQ_API_KEY` güvenli ortam ayarlarında tanımlanmalı ve `api.groq.com` HTTPS erişimi
 sağlanmalıdır. Anahtarı kaynak koduna, Git'e veya sohbet/log çıktısına yazmayın.
@@ -26,6 +36,12 @@ yerine istek açık hata ve insan incelemesi işaretiyle durdurulur.
 seçilebilir. `JUDGE_MODELS` virgülle ayrılmış model listesidir. Yargıç ile üretim/Critic
 aynı veya ilişkili ailedeyse bağımsızlık varsaymayın. Mevcut varsayılan yargıç tek modeldir;
 farklı bir model ailesi araştırmacı tarafından seçilip doğrulanmalıdır.
+
+Hız sınırı (429): `llm_factory.call_with_retry` sağlayıcının `retry-after` süresini (yoksa
+15/30/60 sn) bekleyip en fazla `RATE_LIMIT_RETRIES` (varsayılan 4) kez yeniden dener.
+Bekleme `RATE_LIMIT_MAX_WAIT_S` (varsayılan 90 sn) üstündeyse (ör. günlük kota) beklenmez,
+hata yukarı fırlar ve sistem güvenli tarafa düşer. Groq ücretsiz katman: 8000 TPM, 1000 RPD,
+200K TPD.
 
 Arayüzde duygu kaynağı açıkça seçilir:
 
@@ -42,6 +58,7 @@ ve ek deneyler içindir; slayt ablasyonuyla aynı kabul edilmemelidir.
 
 ```bash
 python batch_tester.py --max-cases 5 --workers 2 --affect-mode model
+python batch_tester.py --expert-only --no-pairs --case-ids X051,X052   # yalnız uzman etiketli vakalar
 python research_report.py runtime/benchmark_runs/KOŞU_KLASÖRÜ
 ```
 
@@ -62,27 +79,39 @@ Varsayılan disk çıktıları metinsizdir. Yalnızca onaylı sentetik veride
 duygu modu ve sistem parametreleri manifestte tutulur. Raporlar keşifseldir; klinik başarı,
 istatistiksel anlamlılık veya hipotezlerin doğrulandığı iddiasını otomatik üretmez.
 
-## Arkadaştan beklenen etiketler
+## Uzman etiketleri (durum: içe aktarıldı)
 
-50 özgün vaka `cases_legacy.py` içine içerik değiştirilmeden geri alındı.
-`risk_level`, `expected_red_flag` yerine kullanılmaz. Uzman etiketleri veya risksiz
-kontrol vakaları proje tarafından uydurulmaz. 14 sentetik başlangıç vakası yalnızca
-altyapı denemesi içindir ve uzman vakalarından ayrı raporlanır.
+Etiketler klinisyen (Yavuz) tarafından verildi; farklılık olduğunda onun etiketi referanstır.
+Güncel durum: 155 vakalık xlsx seti (46 pozitif / 109 negatif), eski 50 vaka (19/26, 5 belirsiz),
+30 kontrol (0/30) ve 20 varyant (16/4); toplam 255 vakanın 250'si etiketli (81/169).
+Eski 50 vakanın anahtar sözcükleri kural motorunun geliştirildiği vakalardır; **kural
+recall'u için bağımsız ölçüm yalnızca 155'lik settir** (veri sızıntısı notu: dönem notları).
 
 ```bash
 python labeling_tools.py export --out runtime/etiket_sablonu.xlsx
-python labeling_tools.py import --in runtime/doldurulmus.xlsx --out runtime/cases_expert.json --labeler REVIEWER_KODU
+python xlsx_to_cases.py ...        # 155'lik xlsx şablonunu vakaya çevirme/kontrol (yardım: --help)
+python labeling_tools.py import --in runtime/doldurulmus.xlsx --out cases_expert.json --labeler Yavuz
 ```
 
-Şablon 50 özgün vaka, 30 boş kontrol ve 20 boş varyant satırı içerir; etiketler boştur.
-Eski risk seviyesi ve sistemin eylem eşlemesi etiketleyiciye gösterilmez.
-`BELİRSİZ` eski etiketi `null` ile kaldırır; boş etiket eski kaydı değiştirmez.
-Hata varsa mevcut çıktı dosyası korunur. Vaka metni değişmişse yeni kimlik gerekir;
-bilinçli düzeltmede `--allow-message-change` açıkça seçilebilir.
-İçe aktarılan dosyayı kullanmak için `CASES_EXPERT_JSON` değerini dosyanın mutlak yoluna ayarlayın.
+Eski risk seviyesi ve sistemin eylem eşlemesi etiketleyiciye gösterilmez. `BELİRSİZ`
+eski etiketi `null` ile kaldırır; boş etiket eski kaydı değiştirmez. Hata varsa mevcut çıktı
+dosyası korunur. Vaka metni değişmişse yeni kimlik gerekir; bilinçli düzeltmede
+`--allow-message-change` açıkça seçilebilir. İçe aktarılan dosyayı kullanmak için
+`CASES_EXPERT_JSON` değerini dosyanın mutlak yoluna ayarlayın. Etiket dosyaları
+(`cases_expert.json`, `*.xlsx`, `etiketler/`) Git'e ve Docker imajına girmez.
+
+Tek komutla sıradaki adımlar (Windows): `.\run_next.ps1` — etiket içe aktarma, testler ve
+20 vakalık hibrit deneme.
+
 
 ## Ek deneyler ve klinisyen değerlendirmesi
 
+- `hybrid_eval.py`: yalnızca triyaj düzeyinde kural–hibrit karşılaştırması (Policy/Critic
+  çağrılmaz; vaka başına en çok 1 çağrı). Uzman etiketli vakalarda kural, hibrit-gevşek ve
+  hibrit-sıkı recall ile yanlış alarm oranını Wilson aralıklarıyla, psikiyatrik/tıbbi/ergen
+  alt gruplarına ayırarak yazar. Çıktı `runtime/hybrid_eval.csv` vaka metni içermez.
+  Seçenekler: `--max-cases N`, `--sleep SN` (TPM için), `--resume` (kota dolduysa kaldığı yerden),
+  `--out`. Semantik hata veren vakalar metriğe girmez ve ayrıca sayılır.
 - `full_hybrid` ve `hybrid_triage_only`: kurallara ek semantik triyaj. Kuralların
   acil sonucu API beklemez; semantik katman kuralları düşürmez. Geçmiş/varsayımsal
   veya belirsiz sonuçlar güncel kriz kesinliği sayılmaz; kontrol sorusuna yönlendirilir.

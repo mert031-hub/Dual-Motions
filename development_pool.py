@@ -151,7 +151,12 @@ def snapshot(pool_path, out_root):
             'canned_keys': result['canned_keys'], 'directive_keys': result['directive_keys'],
         })
     def git(*args):
-        return subprocess.check_output(['git', '-C', str(ROOT), *args], text=True).strip()
+        # Git deposu değilse (ör. zip'ten açılmış kopya) sürüm bilgisi None kalır; batch_tester ile aynı davranış.
+        try:
+            return subprocess.check_output(['git', '-C', str(ROOT), *args], text=True, encoding='utf-8',
+                                           stderr=subprocess.DEVNULL).strip()
+        except (subprocess.CalledProcessError, OSError):
+            return None
     code = {n: digest((ROOT/n).read_bytes()) for n in
             ['development_pool.py', 'storage.py', 'red_flags.py', 'rule_context.py', 'triage.py', 'messages.py', 'cases_legacy.py']}
     summary = {
@@ -187,7 +192,7 @@ def snapshot(pool_path, out_root):
     for r in observations:
         lines.append(f"| {r['source_case_id']} | {r['source_color']} | {r['tier']} | "
                      + ', '.join(f['name'] for f in r['flags']) + ' |')
-    (out / 'summary.md').write_text('\n'.join(lines) + '\n')
+    (out / 'summary.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
     return out
 
 

@@ -37,3 +37,7 @@ cases_expert.json
 *.xlsx
 label_template.json
 review_*.json
+cases_provisional_*.json
+xlsx155/
+etiketler/
+*_dolu*.csv

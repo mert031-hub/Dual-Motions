@@ -75,5 +75,5 @@ class AuditLog:
             for path in self.directory.glob('audit-*.jsonl'):
                 if path.is_symlink():
                     continue
-                entries = [json.loads(line) for line in path.read_text().splitlines() if line]
+                entries = [json.loads(line) for line in path.read_text(encoding='utf-8').splitlines() if line]
                 write_json_lines(path, [e for e in entries if e.get('session_id') != session_id])

@@ -151,11 +151,11 @@ def build_kit(out_root, seed=42):
                'reviewer_directory': 'reviewer', 'private_directory_not_for_reviewers': 'private'}
     write_json(out/'summary.json', summary)
     write_json(out/'manifest.json', {'schema': 'dual-motions.validation-kit.v1', 'seed': seed,
-                                    'source_code_sha256': {name: digest((Path(__file__).parent/name).read_text())
+                                    'source_code_sha256': {name: digest((Path(__file__).parent/name).read_text(encoding='utf-8'))
                                       for name in ['context_schema.py', 'semantic_triage.py', 'synthetic_validation.py',
                                                    'validation_workbench.py', 'clinician_review.py', 'critic_review.py',
                                                    'red_flags.py', 'rule_context.py', 'triage.py', 'expression_review.py', 'clinical_constraints.py']},
-                                    'clinical_source_inventory_sha256': digest((Path(__file__).parent/'docs/clinical_sources.json').read_text())})
+                                    'clinical_source_inventory_sha256': digest((Path(__file__).parent/'docs/clinical_sources.json').read_text(encoding='utf-8'))})
     return out, summary
 
 
@@ -175,8 +175,8 @@ def main():
         print(out)
         print(json.dumps(summary, ensure_ascii=False))
     else:
-        packet = json.loads(Path(args.packet).read_text())
-        forms = [json.loads(Path(p).read_text()) for p in args.forms]
+        packet = json.loads(Path(args.packet).read_text(encoding='utf-8'))
+        forms = [json.loads(Path(p).read_text(encoding='utf-8')) for p in args.forms]
         if Path(args.out).exists():
             raise FileExistsError('Refuse to overwrite an existing review artifact')
         write_json(args.out, context_progress(packet, forms))

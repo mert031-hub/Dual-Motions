@@ -67,7 +67,7 @@ if __name__ == '__main__':
     parser.add_argument('--out', required=True)
     args = parser.parse_args()
     def read(path):
-        data = json.loads(Path(path).read_text())
+        data = json.loads(Path(path).read_text(encoding='utf-8'))
         return data['cases'] if isinstance(data, dict) else data
     write_json(args.out, evaluate(read(args.train), read(args.test)))
     print('Baseline holdout report saved; no clinical validation claim.')

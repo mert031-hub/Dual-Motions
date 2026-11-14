@@ -105,8 +105,8 @@ def main():
     parser.add_argument('--reviewer')
     parser.add_argument('--out', required=True)
     args = parser.parse_args()
-    packet = json.loads(Path(args.packet).read_text())
-    forms = [json.loads(Path(p).read_text()) for p in args.forms]
+    packet = json.loads(Path(args.packet).read_text(encoding='utf-8'))
+    forms = [json.loads(Path(p).read_text(encoding='utf-8')) for p in args.forms]
     if args.action == 'frozen':
         if len(forms) != 1 or args.reviewer is None:
             raise ValueError('Frozen export needs one form and an explicit reviewer')

@@ -53,11 +53,11 @@ def test_plan_balance_is_authored_not_ground_truth_and_no_request_is_made(tmp_pa
     assert set(plan['author_condition_counts_not_gold'].values()) == {1}
     assert plan['clinical_metrics'] is None and not plan['independent_test']
     assert all(c['expected_red_flag'] is None for c in plan['scenarios'])
-    public = json.loads((out/'reviewer/affect_packet.json').read_text())
+    public = json.loads((out/'reviewer/affect_packet.json').read_text(encoding='utf-8'))
     assert all(set(i) == {'item_id', 'user_message', 'message_sha256'} for i in public['items'])
-    form = json.loads((out/'reviewer/affect_form_R1.json').read_text())
+    form = json.loads((out/'reviewer/affect_form_R1.json').read_text(encoding='utf-8'))
     assert all(r['emotion'] is None and r['status'] == 'pending' for r in form['ratings'])
-    assert json.loads((out/'readiness.json').read_text())['provider_calls'] == 0
+    assert json.loads((out/'readiness.json').read_text(encoding='utf-8'))['provider_calls'] == 0
     for kwargs in ({'families': 3}, {'max_attempts': 0}, {'max_attempts': True}):
         with pytest.raises(ValueError):
             make_plan(**kwargs)
@@ -71,7 +71,7 @@ def test_offline_actual_four_arm_graph_is_not_exported_as_live_quality(tmp_path,
     assert checks['gate_calls_zero'] and checks['gate_outputs_identical']
     assert checks['provider_calls'] == 0 and not checks['blinded_response_packet_exported']
     assert not (out/'reviewer/responses.json').exists()
-    report = json.loads((Path(checks['run_dir'])/'research_report.json').read_text())
+    report = json.loads((Path(checks['run_dir'])/'research_report.json').read_text(encoding='utf-8'))
     assert report['H4_descriptive_emotion_groups'] == []
     assert report['status'] == 'offline_infrastructure_only'
     assert all(c['n'] == 0 for c in report['contrasts'].values())
@@ -95,15 +95,15 @@ def test_blinded_live_packet_hides_predictions_and_author_conditions(backend, tm
     monkeypatch.setattr(slide_pilot, 'network_snapshot', lambda: {'status': 'permitted_in_snapshot'})
     out, checks = run(tmp_path, mode='live')  # scripted backend, not real model-quality evidence
     assert checks['infrastructure_checks_passed'] and checks['blinded_response_packet_exported']
-    packet = json.loads((out/'reviewer/responses.json').read_text())
-    mapping = json.loads((out/'private/response_mapping.json').read_text())
+    packet = json.loads((out/'reviewer/responses.json').read_text(encoding='utf-8'))
+    mapping = json.loads((out/'private/response_mapping.json').read_text(encoding='utf-8'))
     assert len(packet['items']) == 16
     for item in packet['items']:
         assert set(item) == {'item_id', 'user_message', 'response', 'content_sha256'}
         meta = mapping['items'][item['item_id']]
         assert meta['family_id'] == 'pilot-family:presentation' and meta['triage_tier'] != 1
     assert not list((out/'reviewer').glob('*.mapping.json'))
-    assert all(r['scores']['safety'] is None for r in json.loads((out/'reviewer/response_ratings_R1.json').read_text())['ratings'])
+    assert all(r['scores']['safety'] is None for r in json.loads((out/'reviewer/response_ratings_R1.json').read_text(encoding='utf-8'))['ratings'])
 
 
 def test_exhausted_pilot_is_explicitly_incomplete_and_no_review_packet_is_exported(backend, tmp_path, monkeypatch):

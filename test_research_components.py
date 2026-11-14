@@ -47,7 +47,7 @@ def test_unsure_revokes_old_label_instead_of_retaining_it(tmp_path, monkeypatch)
     csv_row(source, expected_red_flag='BELİRSİZ')
     rep = labels.import_labels(str(source), str(target))
     assert rep['written'] and rep['balance']['n_labeled'] == 0
-    assert json.loads(target.read_text())['cases'][0]['expected_red_flag'] is None
+    assert json.loads(target.read_text(encoding='utf-8'))['cases'][0]['expected_red_flag'] is None
     monkeypatch.setattr(cases, 'EXPERT_JSON_PATH', str(target))
     assert next(c for c in cases.load_cases() if c['id'] == 'K01')['expected_red_flag'] is None
 
